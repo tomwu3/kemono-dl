@@ -470,8 +470,14 @@ class downloader:
                 else:
                     os.rename(part_file, file['file_path'])
                 return
-            logger.error("Incorrect amount of bytes downloaded | Something went so wrong I have no idea what happened | Removing file")
-            os.remove(part_file)
+            logger.error("Incorrect amount of bytes downloaded | Something went so wrong I have no idea what happened | Saving file with suffix in name")
+            # os.remove(part_file)
+            filepath=os.path.splitext(file['file_path'])
+            filepath=filepath[0]+'_statuscode416'+filepath[1]
+            if self.overwrite:
+                os.replace(part_file, filepath)
+            else:
+                os.rename(part_file, filepath)
             self.post_errors += 1
             return
 
@@ -510,14 +516,24 @@ class downloader:
             logger.debug(f"Local File hash: {local_hash}")
             logger.debug(f"Sever File hash: {file['file_variables']['hash']}")
             if local_hash != file['file_variables']['hash']:
-                logger.warning(f"File hash did not match server! | Retrying")
-                os.remove(part_file)
-                if retry > 0:
-                    self.download_file(file, retry=retry-1)
+                if file['file_variables']['hash'] !=None:
+                    logger.warning(f"File hash did not match server! | Retrying")
+                    os.remove(part_file)
+                    if retry > 0:
+                        self.download_file(file, retry=retry-1)
+                        return
+                    logger.error(f"File hash did not match server! | All retries failed")
+                    self.post_errors += 1
                     return
-                logger.error(f"File hash did not match server! | All retries failed")
-                self.post_errors += 1
-                return
+                else:
+                    logger.warning(f"No hash from server! | Saving file with suffix in name")
+                    filepath=os.path.splitext(file['file_path'])
+                    filepath=filepath[0]+'_noserverhash'+filepath[1]
+                    if self.overwrite:
+                        os.replace(part_file, filepath)
+                    else:
+                        os.rename(part_file, filepath)
+                    return
             # remove .part from file name
             if self.overwrite:
                 os.replace(part_file, file['file_path'])
