@@ -292,11 +292,11 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        fmtTimeByType = lambda x : datetime.datetime.fromtimestamp(x).strftime(self.date_strf_pattern) if type(x) is float else datetime.datetime.strptime(x, r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if type(x) is str else None
-        new_post['post_variables']['added'] = fmtTimeByType(post['added'])
-        new_post['post_variables']['updated'] = fmtTimeByType(post['edited'])
-        new_post['post_variables']['user_updated'] = fmtTimeByType(user['updated'])
-        new_post['post_variables']['published'] = fmtTimeByType(post['published'])
+        self.fmtTimeByType = lambda x : datetime.datetime.fromtimestamp(x).strftime(self.date_strf_pattern) if type(x) is float else datetime.datetime.strptime(x, r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if type(x) is str else None
+        new_post['post_variables']['added'] = self.fmtTimeByType(post['added'])
+        new_post['post_variables']['updated'] = self.fmtTimeByType(post['edited'])
+        new_post['post_variables']['user_updated'] = self.fmtTimeByType(user['updated'])
+        new_post['post_variables']['published'] = self.fmtTimeByType(post['published'])
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
@@ -561,13 +561,7 @@ class downloader:
     def skip_user(self, user:dict):
         # check last update date
         if self.user_up_datebefore or self.user_up_dateafter:
-            usrupd = \
-            datetime.datetime.strptime(user['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(user['updated'],str) \
-            else datetime.datetime.fromtimestamp(user['updated']).strftime(self.date_strf_pattern) \
-            if isinstance(user['updated'],float) \
-            else None
-            if check_date(usrupd, None, self.user_up_datebefore, self.user_up_dateafter):
+            if check_date(self.fmtTimeByType(user['updated']), None, self.user_up_datebefore, self.user_up_dateafter):
                 logger.info("Skipping user | user updated date not in range")
                 return True
         return False
