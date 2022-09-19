@@ -305,10 +305,10 @@ class downloader:
             if isinstance(post['edited'],float) \
             else None
         new_post['post_variables']['user_updated'] = \
-            datetime.datetime.strptime(post['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(post['updated'],str) \
-            else datetime.datetime.fromtimestamp(post['updated']).strftime(self.date_strf_pattern) \
-            if isinstance(post['updated'],float) \
+            datetime.datetime.strptime(user['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(user['updated'],str) \
+            else datetime.datetime.fromtimestamp(user['updated']).strftime(self.date_strf_pattern) \
+            if isinstance(user['updated'],float) \
             else None
         new_post['post_variables']['published'] = \
             datetime.datetime.strptime(post['published'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
