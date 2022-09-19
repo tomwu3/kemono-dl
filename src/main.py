@@ -292,30 +292,11 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        new_post['post_variables']['added'] = \
-            datetime.datetime.strptime(post['added'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(post['added'],str) \
-            else datetime.datetime.fromtimestamp(post['added']).strftime(self.date_strf_pattern) \
-            if isinstance(post['added'],float) \
-            else None
-        new_post['post_variables']['updated'] =  \
-            datetime.datetime.strptime(post['edited'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(post['edited'],str) \
-            else datetime.datetime.fromtimestamp(post['edited']).strftime(self.date_strf_pattern) \
-            if isinstance(post['edited'],float) \
-            else None
-        new_post['post_variables']['user_updated'] = \
-            datetime.datetime.strptime(user['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(user['updated'],str) \
-            else datetime.datetime.fromtimestamp(user['updated']).strftime(self.date_strf_pattern) \
-            if isinstance(user['updated'],float) \
-            else None
-        new_post['post_variables']['published'] = \
-            datetime.datetime.strptime(post['published'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
-            if isinstance(post['published'],str) \
-            else datetime.datetime.fromtimestamp(post['published']).strftime(self.date_strf_pattern) \
-            if isinstance(post['published'],float) \
-            else None
+        fmtTimeByType = lambda x : datetime.datetime.fromtimestamp(x).strftime(self.date_strf_pattern) if type(x) is float else datetime.datetime.strptime(x, r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if type(x) is str else None
+        new_post['post_variables']['added'] = fmtTimeByType(post['added'])
+        new_post['post_variables']['updated'] = fmtTimeByType(post['edited'])
+        new_post['post_variables']['user_updated'] = fmtTimeByType(user['updated'])
+        new_post['post_variables']['published'] = fmtTimeByType(post['published'])
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
