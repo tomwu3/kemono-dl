@@ -560,7 +560,7 @@ class downloader:
     def skip_user(self, user:dict):
         # check last update date
         if self.user_up_datebefore or self.user_up_dateafter:
-            if check_date(datetime.datetime.strptime(user['updated'], r'%a, %d %b %Y %H:%M:%S %Z'), None, self.user_up_datebefore, self.user_up_dateafter):
+            if check_date(datetime.datetime.fromtimestamp(user['updated']), None, self.user_up_datebefore, self.user_up_dateafter):
                 logger.info("Skipping user | user updated date not in range")
                 return True
         return False
