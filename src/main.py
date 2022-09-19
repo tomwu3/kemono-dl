@@ -292,10 +292,30 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        new_post['post_variables']['added'] = datetime.datetime.strptime(post['added'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if post['added'] else None
-        new_post['post_variables']['updated'] = datetime.datetime.strptime(post['edited'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if post['edited'] else None
-        new_post['post_variables']['user_updated'] = datetime.datetime.fromtimestamp(user['updated']).strftime(self.date_strf_pattern) if user['updated'] else None
-        new_post['post_variables']['published'] = datetime.datetime.strptime(post['published'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) if post['published'] else None
+        new_post['post_variables']['added'] = \
+            datetime.datetime.strptime(post['added'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(post['added'],str) \
+            else datetime.datetime.fromtimestamp(post['added']).strftime(self.date_strf_pattern) \
+            if isinstance(post['added'],float) \
+            else None
+        new_post['post_variables']['updated'] =  \
+            datetime.datetime.strptime(post['edited'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(post['edited'],str) \
+            else datetime.datetime.fromtimestamp(post['edited']).strftime(self.date_strf_pattern) \
+            if isinstance(post['edited'],float) \
+            else None
+        new_post['post_variables']['user_updated'] = \
+            datetime.datetime.strptime(post['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(post['updated'],str) \
+            else datetime.datetime.fromtimestamp(post['updated']).strftime(self.date_strf_pattern) \
+            if isinstance(post['updated'],float) \
+            else None
+        new_post['post_variables']['published'] = \
+            datetime.datetime.strptime(post['published'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(post['published'],str) \
+            else datetime.datetime.fromtimestamp(post['published']).strftime(self.date_strf_pattern) \
+            if isinstance(post['published'],float) \
+            else None
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
@@ -560,7 +580,13 @@ class downloader:
     def skip_user(self, user:dict):
         # check last update date
         if self.user_up_datebefore or self.user_up_dateafter:
-            if check_date(datetime.datetime.fromtimestamp(user['updated']), None, self.user_up_datebefore, self.user_up_dateafter):
+            usrupd = \
+            datetime.datetime.strptime(user['updated'], r'%a, %d %b %Y %H:%M:%S %Z').strftime(self.date_strf_pattern) \
+            if isinstance(user['updated'],str) \
+            else datetime.datetime.fromtimestamp(user['updated']).strftime(self.date_strf_pattern) \
+            if isinstance(user['updated'],float) \
+            else None
+            if check_date(usrupd, None, self.user_up_datebefore, self.user_up_dateafter):
                 logger.info("Skipping user | user updated date not in range")
                 return True
         return False
