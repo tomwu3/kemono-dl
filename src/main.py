@@ -316,7 +316,8 @@ class downloader:
                     'ext': file_extension[1:],
                     'url': f"https://{domain}/data{attachment['path']}?f={attachment['name']}",
                     'hash': file_hash,
-                    'index': f"{index + 1}".zfill(len(str(len(post['attachments']))))
+                    'index': f"{index + 1}".zfill(len(str(len(post['attachments'])))),
+                    'referer': f"https://{domain}/{post['service']}/user/{post['user']}/post/{post['id']}"
                 }
                 file['file_path'] = compile_file_path(new_post['post_path'], new_post['post_variables'], file['file_variables'], self.filename_template, self.restrict_ascii)
                 new_post['attachments'].append(file)
@@ -440,7 +441,7 @@ class downloader:
             logger.info(f"Trying to resuming partial download | Resume size: {resume_size} bytes")
 
         try:
-            response = self.session.get(url=file['file_variables']['url'], stream=True, headers={**self.headers,'Range':f"bytes={resume_size}-"}, cookies=self.cookies, timeout=self.timeout)
+            response = self.session.get(url=file['file_variables']['url'], stream=True, headers={**self.headers,'Range':f"bytes={resume_size}-", 'Referer':file['file_variables']['referer']}, cookies=self.cookies, timeout=self.timeout)
         except:
             logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
             if retry > 0:
