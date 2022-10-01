@@ -239,7 +239,8 @@ class downloader:
                 'ext': file_extension[1:],
                 'url': f"https://{post['post_variables']['site']}/data{inline_image['src']}",
                 'hash': file_hash,
-                'index': f"{index + 1}".zfill(len(str(len(inline_images))))
+                'index': f"{index + 1}".zfill(len(str(len(inline_images)))),
+                'referer': f"https://{post['post_variables']['site']}/{post['post_variables']['service']}/user/{post['post_variables']['user_id']}/post/{post['post_variables']['id']}"
             }
             file['file_path'] = compile_file_path(post['post_path'], post['post_variables'], file['file_variables'], self.inline_filename_template, self.restrict_ascii)
             # set local image location in html
