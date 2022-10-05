@@ -508,7 +508,7 @@ class downloader:
             with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
                 start = time.time()
                 downloaded = resume_size
-                for chunk in response.iter_content(chunk_size=1024*1024):
+                for chunk in response.iter_content(chunk_size=32*1024*1024):
                     downloaded += len(chunk)
                     f.write(chunk)
                     print_download_bar(total, downloaded, resume_size, start)
@@ -521,7 +521,8 @@ class downloader:
             if local_hash != file['file_variables']['hash']:
                 if file['file_variables']['hash'] !=None:
                     logger.warning(f"File hash did not match server! | Retrying")
-                    os.remove(part_file)
+                    if os.path.getsize(part_file)==total:
+                        os.remove(part_file)
                     if retry > 0:
                         self.download_file(file, retry=retry-1)
                         return
