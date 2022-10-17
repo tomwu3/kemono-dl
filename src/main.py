@@ -9,6 +9,7 @@ from PIL import Image
 from io import BytesIO
 import json
 from numbers import Number
+import pathlib
 
 from .args import get_args
 from .logger import logger
@@ -178,9 +179,14 @@ class downloader:
                 except:
                     logger.exception("Unable to download post | service:{service} user_id:{user_id} post_id:{id}".format(**post['post_variables']))
                 self.comp_posts.append("https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']))
-            if len(json) < 25:
+            # seems like kemono changed this, coomer is not yet
+            if site=='kemono' or len(json)==50:
+                chunk_size=50
+            else:
+                chunk_size=25
+            if len(json) < chunk_size:
                 return # completed
-            chunk += 25
+            chunk += chunk_size
 
 
     def download_icon_banner(self, post:dict, img_types:list):
@@ -596,7 +602,7 @@ class downloader:
         if not self.overwrite:
             if os.path.exists(file['file_path']):
                 confirm_msg = ''
-                if 'hash' in file['file_variables'] and file['file_variables']['hash'] != '' and self.local_hash:
+                if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None and self.local_hash:
                     local_hash = get_file_hash(file['file_path'])
                     if local_hash != file['file_variables']['hash']:
                         logger.warning(f"Corrupted file detected, remove this file and try to redownload | path: {file['file_path']} " + 
@@ -606,6 +612,13 @@ class downloader:
                     confirm_msg = ' | Hash confirmed'
                 logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File already exists{confirm_msg}")
                 return True
+            similar=pathlib.Path(file['file_path']).parent.rglob(f'*{file["file_variables"]["index"]}_*')
+            for x in similar:
+                if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None:
+                    sim_hash = get_file_hash(str(x))
+                    if sim_hash == file['file_variables']['hash']:
+                        logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | Same hash file exists")
+                        return True
 
         # check file name extention
         if self.only_ext:
