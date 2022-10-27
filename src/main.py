@@ -85,6 +85,7 @@ class downloader:
         self.post_timeout = args['post_timeout']
         self.simulate = args['simulate']
         self.local_hash = args['local_hash']
+        self.dupe_check = args['dupe_check']
 
         self.session = RefererSession()
         retries = Retry(
@@ -612,13 +613,14 @@ class downloader:
                     confirm_msg = ' | Hash confirmed'
                 logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File already exists{confirm_msg}")
                 return True
-            similar=pathlib.Path(file['file_path']).parent.rglob(f'*{file["file_variables"]["index"]}_*')
-            for x in similar:
-                if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None:
-                    sim_hash = get_file_hash(str(x))
-                    if sim_hash == file['file_variables']['hash']:
-                        logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | Same hash file exists")
-                        return True
+            if self.dupe_check:
+                similar=pathlib.Path(file['file_path']).parent.rglob(f'{file["file_variables"]["index"]}_*')
+                for x in similar:
+                    if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None:
+                        sim_hash = get_file_hash(str(x))
+                        if sim_hash == file['file_variables']['hash']:
+                            logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | Same hash file exists")
+                            return True
 
         # check file name extention
         if self.only_ext:

@@ -201,8 +201,12 @@ def get_args():
                     help="Set a custom user agent")
 
     ap.add_argument("--local-hash",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help='Check hash before skip downloading local exist files')
+
+    ap.add_argument("--dupe-check",
+                    action=argparse.BooleanOptionalAction, default=True,
+                    help='Simple similar filename file search and hash compare to prevent duplicate downloads, only works with "{index}_" first file naming scheme')
 
     args = vars(ap.parse_args())
 
