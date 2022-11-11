@@ -163,6 +163,10 @@ class downloader:
                     logger.error(f"Unable to find user json for {api}?o={chunk}")
                 return # completed
             for post in json:
+                post['site']=site
+                if self.archive_file:
+                    if self.skip_post(post,True):
+                        continue
                 post = self.clean_post(post, user, site)
                 # only download once
                 if not is_post and first:
@@ -170,7 +174,7 @@ class downloader:
                     if self.dms:
                         self.write_dms(post)
                     first = False
-                if self.skip_post(post):
+                if self.skip_post(post,False):
                     continue
                 try:
                     self.download_post(post)
@@ -577,12 +581,14 @@ class downloader:
                 return True
         return False
 
-    def skip_post(self, post:dict):
+    def skip_post(self, post:dict, check_archive_only:bool):
         # check if the post should be downloaded
-        if self.archive_file:
-            if "https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']) in self.archive_list:
-                logger.info("Skipping post | post already archived")
+        if self.archive_file and check_archive_only:
+            if "https://{site}/{service}/user/{user}/post/{id}".format(**post) in self.archive_list:
+                logger.info(f"Skipping post {post['id']} | post already archived") # add some numbers to indicate that the script isn't frozen when a lot of posts skipped and your screen is full of this message
                 return True
+            elif check_archive_only:
+                return False
 
         if self.date or self.datebefore or self.dateafter:
             if not post['post_variables']['published']:
