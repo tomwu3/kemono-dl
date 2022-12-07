@@ -122,6 +122,14 @@ The amount of times to retry / resume downloading a file. (default: 5)
 `--ratelimit-sleep SEC`  
 The time in seconds to wait after being ratelimited (default: 120)    
 
+## Options added in this fork
+
+`--[no-]local-hash`    
+Hash check before skip existing files. (default: False)    
+`--[no-]dupe-check`    
+Look for same index file with similar name and compare to server hash to prevent duplicate downloads. (default: True)    
+*notice: idk if last two args works together or not, i'll never use options other than these two defaults because that's why i make them default. if you use them and have issues please report.*
+
 # Notes
 -   Excepted link formats:
     -   `https://{site}.party/{service}/user/{user_id}`
