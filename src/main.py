@@ -256,8 +256,9 @@ class downloader:
                 'referer': f"https://{post['post_variables']['site']}/{post['post_variables']['service']}/user/{post['post_variables']['user_id']}/post/{post['post_variables']['id']}"
             }
             file['file_path'] = compile_file_path(post['post_path'], post['post_variables'], file['file_variables'], self.inline_filename_template, self.restrict_ascii)
+            html_loc = pathlib.Path(compile_file_path(post['post_path'], post['post_variables'], {'filename':'dummy','ext':'html'}, self.other_filename_template, self.restrict_ascii)).parent
             # set local image location in html
-            inline_image['src'] = file['file_path']
+            inline_image['src'] = str(pathlib.Path(file['file_path']).relative_to(html_loc))
             post['inline_images'].append(file)
         return content_soup
 
