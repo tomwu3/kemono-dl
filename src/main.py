@@ -86,6 +86,7 @@ class downloader:
         self.simulate = args['simulate']
         self.local_hash = args['local_hash']
         self.dupe_check = args['dupe_check']
+        self.force_unlisted = args['force_unlisted']
 
         self.session = RefererSession()
         retries = Retry(
@@ -141,8 +142,11 @@ class downloader:
         is_post = found.group(6)
         user = self.get_user(user_id, service)
         if not user:
-            logger.error(f"Unable to find user info in creators list | {service} | {user_id}")
-            return
+            if self.force_unlisted:
+                user={'favorited': 0, 'id': user_id, 'indexed': 1666666666, 'name': user_id, 'service': service, 'updated': 1666666666}
+            else:
+                logger.error(f"Unable to find user info in creators list | {service} | {user_id}")
+                return
         if not is_post:
             if self.skip_user(user):
                 return

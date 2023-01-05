@@ -208,6 +208,10 @@ def get_args():
                     action=argparse.BooleanOptionalAction, default=True,
                     help='Simple similar filename file search and hash compare to prevent duplicate downloads, only works with "{index}_" first file naming scheme')
 
+    ap.add_argument("--force-unlisted",
+                    action=argparse.BooleanOptionalAction, default=False,
+                    help='Still try to request api if user is not found in creators list. Use carefully.')
+
     args = vars(ap.parse_args())
 
     # takes a comma seperated lost of cookie files and loads them into a cookie jar
