@@ -129,8 +129,9 @@ Hash check before skip existing files. (default: False)
 `--[no-]dupe-check`    
 Look for same index file with similar name and compare to server hash to prevent duplicate downloads. Works only for naming schemes starts with index, for now (maybe). (default: True)    
 > *notice: idk if last two args works together or not, i'll never use options other than these two defaults because that's why i make them default. if you use them and have issues please report.*
-`--[no-]force-unlisted`
-Still try to request api if user is not found in creators list. Use carefully.
+
+`--[no-]force-unlisted`    
+Still try to request api if user is not found in creators list. Use carefully. (default: False)    
 
 
 # Notes
