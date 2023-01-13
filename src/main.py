@@ -189,7 +189,7 @@ class downloader:
                     logger.exception("Unable to download post | service:{service} user_id:{user_id} post_id:{id}".format(**post['post_variables']))
                 self.comp_posts.append("https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']))
             # seems like kemono changed this, coomer is not yet
-            if site=='kemono' or len(json)==50:
+            if site.startswith('kemono') or len(json)==50:
                 chunk_size=50
             else:
                 chunk_size=25
