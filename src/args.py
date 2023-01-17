@@ -11,7 +11,7 @@ def get_args():
     ap = argparse.ArgumentParser()
 
     ap.add_argument("--cookies",
-                    metavar="FILE", type=str, default=None, required=True,
+                    metavar="FILE", type=str, default=None,
                     help="Takes in a cookie file or a list of cookie files separated by a comma. Used to get around the DDOS protection. Your cookie file must have been gotten while logged in to use the favorite options.")
 
 
@@ -211,6 +211,10 @@ def get_args():
     ap.add_argument("--force-unlisted",
                     action=argparse.BooleanOptionalAction, default=False,
                     help='Still try to request api if user is not found in creators list. Use carefully.')
+
+    ap.add_argument("--retry-403",
+                    metavar='COUNT', type=int, default=0,
+                    help='When get 403 (possibly because of DDoS-Guard), retry without session.')
 
     args = vars(ap.parse_args())
 

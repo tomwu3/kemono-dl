@@ -87,6 +87,7 @@ class downloader:
         self.local_hash = args['local_hash']
         self.dupe_check = args['dupe_check']
         self.force_unlisted = args['force_unlisted']
+        self.retry_403 = args['retry_403']
 
         self.session = RefererSession()
         retries = Retry(
@@ -477,9 +478,24 @@ class downloader:
             return
 
         if response.status_code == 403:
-            logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 403 Forbidden")
-            self.post_errors += 1
-            return
+            for _ in range(self.retry_403):
+                logger.info('A 403 encountered, retry without session.')
+                try:
+                    response = requests.get(url=file['file_variables']['url'], stream=True, headers={'Range':f"bytes={resume_size}-", 'Referer':file['file_variables']['referer']}, timeout=self.timeout)
+                except:
+                    logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
+                    if retry > 0:
+                        self.download_file(file, retry=retry-1)
+                        return
+                    logger.error(f"Failed to get responce: {file['file_variables']['url']} | All retries failed")
+                    self.post_errors += 1
+                    return
+                if response.status_code != 403:
+                    break
+            if response.status_code == 403:
+                logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 403 Forbidden")
+                self.post_errors += 1
+                return
 
         if response.status_code == 416:
             logger.warning(f"Failed to download: {os.path.split(file['file_path'])[1]} | 416 Range Not Satisfiable | Assuming broken server hash value")
@@ -626,11 +642,13 @@ class downloader:
                 logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File already exists{confirm_msg}")
                 return True
             if self.dupe_check:
-                similar=pathlib.Path(file['file_path']).parent.rglob(f'{file["file_variables"]["index"]}_*')
+                similar=pathlib.Path(file['file_path']).parent.glob(f'{file["file_variables"]["index"]}_*')
                 for x in similar:
                     if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None:
                         sim_hash = get_file_hash(str(x))
                         if sim_hash == file['file_variables']['hash']:
+                            if x.suffix == '.part':
+                                os.rename(x,x.parent/x.stem)
                             logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | Same hash file exists")
                             return True
 
