@@ -132,6 +132,8 @@ Look for same index file with similar name and compare to server hash to prevent
 
 `--[no-]force-unlisted`    
 Still try to request api if user is not found in creators list. Use carefully. (default: False)    
+`--retry-403 COUNT`    
+When get 403 (possibly because of [DDoS-Guard](# "fucker made me wasted a day")), retry without session up to `COUNT` times. (default: 0)    
 
 
 # Notes
