@@ -27,7 +27,7 @@ class downloader:
         self.creators = []
 
         # requests variables
-        self.headers = {'User-Agent': args['user_agent']}
+        self.headers = {'User-Agent': args['user_agent']} if args['user_agent'] else {}
         self.cookies = args['cookies']
         self.timeout = 300
 
