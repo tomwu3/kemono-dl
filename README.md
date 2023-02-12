@@ -134,6 +134,8 @@ Look for same index file with similar name and compare to server hash to prevent
 Still try to request api if user is not found in creators list. Use carefully. (default: False)    
 `--retry-403 COUNT`    
 When get 403 (possibly because of DDoS-Guard), retry without session up to `COUNT` times. (default: 0)    
+`--[mo-]fp-added`    
+Filter posts by added date instead of published date. Override behavior of --date --dateafter --datebefore. (default: False)    
 
 
 # Notes
