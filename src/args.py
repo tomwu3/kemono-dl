@@ -216,6 +216,10 @@ def get_args():
                     metavar='COUNT', type=int, default=0,
                     help='When get 403 (possibly because of DDoS-Guard), retry without session.')
 
+    ap.add_argument("--fp-added",
+                    action=argparse.BooleanOptionalAction, default=False,
+                    help='Filter posts by added date instead of published date. Override behavior of --date --dateafter --datebefore.')
+
     args = vars(ap.parse_args())
 
     # takes a comma seperated lost of cookie files and loads them into a cookie jar

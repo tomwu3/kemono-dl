@@ -88,6 +88,7 @@ class downloader:
         self.dupe_check = args['dupe_check']
         self.force_unlisted = args['force_unlisted']
         self.retry_403 = args['retry_403']
+        self.fp_added = args['fp_added']
 
         self.session = RefererSession()
         retries = Retry(
@@ -616,7 +617,7 @@ class downloader:
             if not post['post_variables']['published']:
                 logger.info("Skipping post | post published date not in range")
                 return True
-            elif check_date(self.get_date_by_type(post['post_variables']['published'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
+            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
                 logger.info("Skipping post | post published date not in range")
                 return True
 
