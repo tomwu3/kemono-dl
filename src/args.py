@@ -158,8 +158,22 @@ def get_args():
                     metavar="EXT", type=str, default=[],
                     help="Only download attachments or inline images without the given file type(s). Takes a file extensions or list of file extensions separated by a comma. (ex mp4,jpg,gif,zip)")
 
+    ap.add_argument("--only-postname",
+                    metavar="postname", type=str, default=[],
+                    help="Only download posts with given word in its title")
 
+    ap.add_argument("--skip-postname",
+                    metavar="postname", type=str, default=[],
+                    help="Only download posts without given word in its title")
+                    
+    ap.add_argument("--only-filename",
+                    metavar="filename", type=str, default=[],
+                    help="Only download files with given word in its title")
 
+    ap.add_argument("--skip-filename",
+                    metavar="filename", type=str, default=[],
+                    help="Only download files without given word in its title")
+                 
     ap.add_argument("--version",
                     action='version', version=str(__version__),
                     help="Print the version and exit.")
