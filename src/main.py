@@ -632,16 +632,17 @@ class downloader:
         # check post title
         if self.only_postname:
             skip = True
-            for index, value in self.only_postname:
-                if value.lower() in post['post_variables']['title'].lower():
+            for w in self.only_postname:
+                print(w)
+                if w.lower() in post['post_variables']['title'].lower():
                     skip = False
             if skip:
                 logger.info("Skipping post | post title does not contains wanted word(s)")
                 return True
                 
         if self.not_postname:
-            for index, value in self.only_postname:
-                if value.lower() in post['post_variables']['title'].lower():
+            for w in self.only_postname:
+                if w.lower() in post['post_variables']['title'].lower():
                     logger.info("Skipping post | post title contains unwanted word(s)")
                     return True
         
@@ -686,16 +687,16 @@ class downloader:
         # check file name 
         if self.only_filename:
             skip = True
-            for index, value in self.only_filename:
-                if value.lower() in file['file_variables']['filename'].lower():
+            for w in self.only_filename:
+                if w.lower() in file['file_variables']['filename'].lower():
                     skip = False
             if skip:
                 logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File name {file['file_variables']['filename']} not found")
                 return True
                 
         if self.not_filename:
-            for index, value in self.only_filename:
-                if value.lower() in file['file_variables']['filename'].lower():
+            for w in self.only_filename:
+                if w.lower() in file['file_variables']['filename'].lower():
                     logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File name {file['file_variables']['filename']} found")
                     return True
 
