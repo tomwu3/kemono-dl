@@ -62,9 +62,9 @@ def get_args():
                     action='store_true', default=False,
                     help="Write extracted links from post content to a text file.")
 
-    ap.add_argument("--extract-links-to",
+    ap.add_argument("--extract-all-links",
                     action='store_true', default=False,
-                    help="Write extracted links from poster to a text file.")
+                    help="Write all extracted links from poster to USERNAME.txt.")
 
 
     ap.add_argument("--dms",

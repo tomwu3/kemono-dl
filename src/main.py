@@ -51,7 +51,7 @@ class downloader:
         self.inline = args['inline']
         self.content = args['content']
         self.extract_links = args['extract_links']
-        self.extract_links_to = args['extract_links_to']
+        self.extract_all_links = args['extract_all_links']
         self.comments = args['comments']
         self.json = args['json']
         self.yt_dlp = args['yt_dlp']
@@ -363,7 +363,7 @@ class downloader:
 
         new_post['links'] = {'text':None,'file_variables':None, 'file_path':None}
         embed_url = "{url}\n".format(**post['embed']) if post['embed'] else ''
-        if self.extract_links or self.extract_links_to:
+        if self.extract_links or self.extract_all_links:
             self.compile_content_links(new_post, content_soup, embed_url)
 
         return new_post
@@ -413,9 +413,8 @@ class downloader:
         # Write post content links
         if post['links']['text']:
             try:
-                if self.extract_links_to:
-                    self.write_to_file(f".\{post['post_variables']['username']}.txt", post['links']['text'])
-                    #print(os.path.split(post['links']['file_path'])[0:-1])
+                if self.extract_all_links:
+                    self.write_links_to_file(f".\{post['post_variables']['username']}.txt", post['links']['text'])
                 if self.extract_links:
                     self.write_to_file(post['links']['file_path'], post['links']['text'])
             except:
@@ -454,6 +453,10 @@ class downloader:
             else:
                 with open(file_path,'wb') as f:
                     f.write(file_content.encode("utf-8"))
+
+    def write_links_to_file(self, file_path, file_content):
+        with open(file_path,'a') as f:
+            print(file_content, file=f)
 
     def download_file(self, file:dict, retry:int, postid):
         # download a file
