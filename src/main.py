@@ -176,16 +176,16 @@ class downloader:
                     logger.error(f"Unable to find user json for {api}?o={chunk}")
                 return # completed
             for post in json:
-                post['site']=site
                 # only download once
                 if not is_post and first:
-                    post = self.clean_post(post, user, site)
-                    self.download_icon_banner(post, self.icon_banner)
+                    post_tmp = self.clean_post(post, user, site)
+                    self.download_icon_banner(post_tmp, self.icon_banner)
                     if self.dms:
-                        self.write_dms(post)
+                        self.write_dms(post_tmp)
                     if self.fancards:
-                        self.download_fancards(post)
+                        self.download_fancards(post_tmp)
                     first = False
+                post['site']=site
                 if self.archive_file:
                     if self.skip_post(post,True):
                         continue
