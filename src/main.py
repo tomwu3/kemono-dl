@@ -177,6 +177,7 @@ class downloader:
                 return # completed
             for post in json:
                 post['site']=site
+                # only download once
                 if not is_post and first:
                     post = self.clean_post(post, user, site)
                     self.download_icon_banner(post, self.icon_banner)
@@ -189,7 +190,6 @@ class downloader:
                     if self.skip_post(post,True):
                         continue
                 post = self.clean_post(post, user, site)
-                # only download once
                 if self.skip_post(post,False):
                     continue
                 try:
