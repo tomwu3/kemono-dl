@@ -177,18 +177,19 @@ class downloader:
                 return # completed
             for post in json:
                 post['site']=site
-                if self.archive_file:
-                    if self.skip_post(post,True):
-                        continue
-                post = self.clean_post(post, user, site)
-                # only download once
                 if not is_post and first:
+                    post = self.clean_post(post, user, site)
                     self.download_icon_banner(post, self.icon_banner)
                     if self.dms:
                         self.write_dms(post)
                     if self.fancards:
                         self.download_fancards(post)
                     first = False
+                if self.archive_file:
+                    if self.skip_post(post,True):
+                        continue
+                post = self.clean_post(post, user, site)
+                # only download once
                 if self.skip_post(post,False):
                     continue
                 try:
