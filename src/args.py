@@ -238,6 +238,10 @@ def get_args():
     ap.add_argument("--fp-added",
                     action=argparse.BooleanOptionalAction, default=False,
                     help='Filter posts by added date instead of published date. Override behavior of --date --dateafter --datebefore.')
+    
+    ap.add_argument("--fancards",
+                    action=argparse.BooleanOptionalAction, default=False,
+                    help='Download Fancards.')
 
     args = vars(ap.parse_args())
 
