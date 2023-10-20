@@ -175,6 +175,8 @@ class downloader:
                 elif chunk == 0:
                     logger.error(f"Unable to find user json for {api}?o={chunk}")
                 return # completed
+            if not isinstance(json,list):
+                json=[json]
             for post in json:
                 # only download once
                 if not is_post and first:
