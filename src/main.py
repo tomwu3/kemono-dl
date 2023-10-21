@@ -202,11 +202,7 @@ class downloader:
                 except:
                     logger.exception("Unable to download post | service:{service} user_id:{user_id} post_id:{id}".format(**post['post_variables']))
                 self.comp_posts.append("https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']))
-            # seems like kemono changed this, coomer is not yet
-            if site.startswith('kemono') or len(json)==50:
-                chunk_size=50
-            else:
-                chunk_size=25
+            chunk_size = 50
             if len(json) < chunk_size:
                 return # completed
             chunk += chunk_size
@@ -648,7 +644,7 @@ class downloader:
         # check last update date
         if self.user_up_datebefore or self.user_up_dateafter:
             if check_date(self.get_date_by_type(user['updated']), None, self.user_up_datebefore, self.user_up_dateafter):
-                logger.info("Skipping user | user updated date not in range")
+                logger.info(f"Skipping user {user['id']} | user updated date not in range")
                 return True
         return False
 
@@ -663,14 +659,14 @@ class downloader:
 
         if self.date or self.datebefore or self.dateafter:
             if not post['post_variables']['published']:
-                logger.info("Skipping post | post published date not in range")
+                logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
                 return True
-            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
-                logger.info("Skipping post | post published date not in range")
+            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added']), self.date, self.datebefore, self.dateafter):
+                logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
                 return True
 
         if "https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']) in self.comp_posts:
-            logger.info("Skipping post | post was already downloaded this session")
+            logger.info(f"Skipping post {post['post_variables']['id']} | post was already downloaded this session")
             return True
 
         # check post title
@@ -681,13 +677,13 @@ class downloader:
                     skip = False
                     break
             if skip:
-                logger.info(f"Skipping post | post title does not contain any of the given word(s): {self.only_postname}")
+                logger.info(f"Skipping post {post['post_variables']['id']} | post title does not contain any of the given word(s): {self.only_postname}")
                 return True
                 
         if self.not_postname:
             for w in self.not_postname:
                 if w.lower() in post['post_variables']['title'].lower():
-                    logger.info(f"Skipping post | post title contains word: {w}")
+                    logger.info(f"Skipping post {post['post_variables']['id']} | post title contains word: {w}")
                     return True
         
         return False
