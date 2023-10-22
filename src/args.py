@@ -219,6 +219,10 @@ def get_args():
                     metavar="UA", type=str, default='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
                     help="Set a custom user agent")
 
+    ap.add_argument("--proxy",
+                    metavar="PROXY", type=str, default=None,
+                    help="Set a proxy")
+
     ap.add_argument("--local-hash",
                     action=argparse.BooleanOptionalAction, default=False,
                     help='Check hash before skip downloading local exist files')
@@ -242,6 +246,10 @@ def get_args():
     ap.add_argument("--fancards",
                     action=argparse.BooleanOptionalAction, default=False,
                     help='Download Fancards.')
+
+    ap.add_argument("--cccp",
+                    action=argparse.BooleanOptionalAction, default=False,
+                    help='Change all input links (--links and --from-file) to .su domain links.')
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}

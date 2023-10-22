@@ -22,6 +22,8 @@ class downloader:
 
     def __init__(self, args):
         self.input_urls = args['links'] + args['from_file']
+        if args['cccp']:
+            self.input_urls = [i.replace('.party','.su') for i in self.input_urls]
         # list of completed posts from current session
         self.comp_posts = []
         # list of creators info
@@ -106,6 +108,9 @@ class downloader:
         )
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        self.proxies = {'http': args['proxy'], 'https': args['proxy']}
+        self.session.proxies = self.proxies
 
         self.start_download()
 
@@ -527,7 +532,7 @@ class downloader:
             for _ in range(self.retry_403):
                 logger.info('A 403 encountered, retry without session.')
                 try:
-                    response = requests.get(url=file['file_variables']['url'], stream=True, headers={'Range':f"bytes={resume_size}-", 'Referer':file['file_variables']['referer']}, timeout=self.timeout)
+                    response = requests.get(url=file['file_variables']['url'], stream=True, headers={'Range':f"bytes={resume_size}-", 'Referer':file['file_variables']['referer']}, timeout=self.timeout,proxies=self.proxies)
                 except:
                     logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
                     if retry > 0:
@@ -749,7 +754,7 @@ class downloader:
 
         # check file size
         if self.min_size or self.max_size:
-            file_size = requests.get(file['file_variables']['url'], cookies=self.cookies, stream=True).headers.get('content-length', 0)
+            file_size = requests.get(file['file_variables']['url'], cookies=self.cookies, stream=True,proxies=self.proxies).headers.get('content-length', 0)
             if int(file_size) == 0:
                     logger.info(f"Skipping: {os.path.split(file['file_path'])[1]} | File size not included in file header")
                     return True
