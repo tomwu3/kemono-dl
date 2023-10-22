@@ -652,7 +652,9 @@ class downloader:
     def skip_post(self, post:dict, check_archive_only:bool):
         # check if the post should be downloaded
         if self.archive_file and check_archive_only:
-            if "https://{site}/{service}/user/{user}/post/{id}".format(**post) in self.archive_list:
+            post_url = "https://{site}/{service}/user/{user}/post/{id}".format(**post)
+            post_url_another = post_url.replace('.su','.party') if post['site'].endswith('.su') else post_url.replace('.party','.su')
+            if post_url in self.archive_list or post_url_another in self.archive_list:
                 logger.info(f"Skipping post {post['id']} | post already archived") # add some numbers to indicate that the script isn't frozen when a lot of posts skipped and your screen is full of this message
                 return True
             elif check_archive_only:
