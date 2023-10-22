@@ -781,7 +781,7 @@ class downloader:
             if not domain:
                 logger.warning(f"URL is not downloadable | {url}")
                 continue
-            if domain not in self.cookie_domains.values():
+            if domain not in self.cookie_domains.values() and self.cookies is not None:
                 logger.warning(f"Domain not in cookie files, cookie won't work properly | {url}")
             urls.append(url)
             if not domain in domains: domains.append(domain)
