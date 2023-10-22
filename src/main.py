@@ -835,13 +835,15 @@ class downloader:
             except:
                 logger.exception(f"Unable to get posts for {url}")
 
-    # def get_date_by_type(self, time, date_format =  r'%a, %d %b %Y %H:%M:%S %Z'):
     def get_date_by_type(self, time):
+        date_format = r'%Y%m%d'
         if isinstance(time, Number):
             t = datetime.datetime.fromtimestamp(time)
         elif isinstance(time, str):
-            t = datetime.datetime.fromisoformat(time)
-            # t = datetime.datetime.strptime(time, date_format)
+            try:
+                t = datetime.datetime.fromisoformat(time)
+            except ValueError:
+                t = datetime.datetime.strptime(time, date_format)
         elif time == None:
             return None
         else:
