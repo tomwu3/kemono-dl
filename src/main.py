@@ -669,7 +669,7 @@ class downloader:
             if not post['post_variables']['published']:
                 logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
                 return True
-            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added']), self.date, self.datebefore, self.dateafter):
+            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
                 logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
                 return True
 
@@ -835,14 +835,16 @@ class downloader:
             except:
                 logger.exception(f"Unable to get posts for {url}")
 
-    def get_date_by_type(self, time):
-        date_format = r'%Y%m%d'
+    def get_date_by_type(self, time, date_format = None):
         if isinstance(time, Number):
             t = datetime.datetime.fromtimestamp(time)
         elif isinstance(time, str):
-            try:
-                t = datetime.datetime.fromisoformat(time)
-            except ValueError:
+            if date_format is None:
+                try:
+                    t = datetime.datetime.fromisoformat(time)
+                except ValueError:
+                    t = datetime.datetime.strptime(time, r'%Y%m%d')
+            else:
                 t = datetime.datetime.strptime(time, date_format)
         elif time == None:
             return None
