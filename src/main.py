@@ -67,6 +67,7 @@ class downloader:
         if args['banner']:
             self.icon_banner.append('banner')
         self.dms = args['dms']
+        self.announcements = args['announcements']
 
         # controls files to ignore
         self.overwrite = args['overwrite']
@@ -196,6 +197,8 @@ class downloader:
                         self.write_dms(post_tmp)
                     if self.fancards:
                         self.download_fancards(post_tmp)
+                    if self.announcements:
+                        self.write_announcements(post)
                     first = False
                 post['site']=site
                 if self.archive_file:
@@ -264,7 +267,7 @@ class downloader:
         self.write_to_file(file_path, dms_soup.prettify())
 
     def download_fancards(self, post:dict):
-        # no api method to get fancards so using from html (not future proof)
+        # there's api now, too lazy to rewrite
         if post['post_variables']['service'] != 'fanbox':
             logger.debug("Skipping fancards for non fanbox user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
@@ -290,6 +293,29 @@ class downloader:
             }
             file_path = compile_file_path(os.path.join(post['post_path'],'Fancards'), post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
             self.download_file({"file_path":file_path,"file_variables":file_variables}, retry=self.retry, postid='dummy postid') #dummy postid
+
+    def write_announcements(self, post:dict):
+        post_url = "https://{site}/api/v1/{service}/user/{user_id}/announcements".format(**post['post_variables'])
+        response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+        if not response.ok:
+            logger.error("Failed to download announcement, skipping...")
+        if not response.json():
+            logger.info("No announcements found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
+
+        announcements = ""
+        for announcement in response.json():
+            announcements += f'# {announcement["published"].split("T")[0]}\n\n'
+            announcements += f'{announcement["content"].strip()}\n\n'
+
+        file_variables = {
+            'filename':'announcements',
+            'ext':'txt'
+        }
+        file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
+        overwrite_original = self.overwrite
+        self.overwrite = True
+        self.write_to_file(file_path, announcements)
+        self.overwrite = overwrite_original
 
     def get_inline_images(self, post, content_soup):
         # only get images that are hosted by the .party site
