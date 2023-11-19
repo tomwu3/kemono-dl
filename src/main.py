@@ -116,7 +116,7 @@ class downloader:
 
     def get_creators(self, domain:str):
         # get site creators
-        creators_api = f"https://{domain}/api/v1/creators/"
+        creators_api = f"https://{domain}/api/v1/creators.txt"
         logger.debug(f"Getting creator json from {creators_api}")
         return self.session.get(url=creators_api, cookies=self.cookies, headers=self.headers, timeout=self.timeout).json()
 
@@ -126,7 +126,7 @@ class downloader:
                 return creator
         return None
 
-    def get_favorites(self, domain:str, fav_type:str, services:list = None):
+    def get_favorites(self, domain:str, fav_type:str, retry:int, services:list = None):
         fav_api = f'https://{domain}/api/v1/account/favorites?type={fav_type}'
         logger.debug(f"Getting favorite json from {fav_api}")
         response = self.session.get(url=fav_api, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
@@ -134,7 +134,11 @@ class downloader:
             logger.error(f"{response.status_code} {response.reason} | Bad cookie file")
             return
         if not response.ok:
-            logger.error(f"{response.status_code} {response.reason}")
+            logger.exception(f"{response.status_code} {response.reason} | Retrying")
+            if retry>0:
+                self.get_favorites(domain=domain, fav_type=fav_type, retry=retry-1, services=services)
+                return
+            logger.error(f"{response.status_code} {response.reason} | All retries failed")
             return
         for favorite in response.json():
             if fav_type == 'post':
