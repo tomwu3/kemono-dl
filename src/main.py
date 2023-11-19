@@ -131,14 +131,14 @@ class downloader:
         logger.debug(f"Getting favorite json from {fav_api}")
         response = self.session.get(url=fav_api, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if response.status_code == 401:
-            logger.error(f"{response.status_code} {response.reason} | Bad cookie file")
+            logger.error(f"Failed to get favorites: {response.status_code} {response.reason} | Bad cookie file")
             return
         if not response.ok:
-            logger.exception(f"{response.status_code} {response.reason} | Retrying")
             if retry>0:
+                logger.exception(f"Failed to get favorites: {response.status_code} {response.reason} | Retrying")
                 self.get_favorites(domain=domain, fav_type=fav_type, retry=retry-1, services=services)
                 return
-            logger.error(f"{response.status_code} {response.reason} | All retries failed")
+            logger.error(f"Failed to get favorites: {response.status_code} {response.reason} | All retries failed")
             return
         for favorite in response.json():
             if fav_type == 'post':
