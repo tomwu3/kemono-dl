@@ -824,12 +824,12 @@ class downloader:
                 logger.exception(f"Unable to get favorite posts from {self.cookie_domains['coomer']}")
         if self.k_fav_users:
             try:
-                self.get_favorites(self.cookie_domains['kemono'], 'artist', self.k_fav_users)
+                self.get_favorites(self.cookie_domains['kemono'], 'artist', retry=self.retry, services=self.k_fav_users)
             except:
                 logger.exception(f"Unable to get favorite users from {self.cookie_domains['kemono']}")
         if self.c_fav_users:
             try:
-                self.get_favorites(self.cookie_domains['coomer'], 'artist', self.c_fav_users)
+                self.get_favorites(self.cookie_domains['coomer'], 'artist', retry=self.retry, services=self.c_fav_users)
             except:
                 logger.exception(f"Unable to get favorite users from {self.cookie_domains['coomer']}")
 
