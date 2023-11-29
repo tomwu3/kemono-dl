@@ -198,7 +198,7 @@ class downloader:
                     if self.fancards:
                         self.download_fancards(post_tmp)
                     if self.announcements:
-                        self.write_announcements(post)
+                        self.write_announcements(post_tmp)
                     first = False
                 post['site']=site
                 if self.archive_file:
@@ -306,7 +306,9 @@ class downloader:
 
         announcements = ""
         for announcement in response.json():
-            announcements += f'# {announcement["published"].split("T")[0]}\n\n'
+            ann_pub_date = f'published: {announcement.get("published")}'
+            ann_add_date = f'added: {announcement.get("added")}'
+            announcements += f'# {ann_pub_date} | {ann_add_date}\n\n'
             announcements += f'{announcement["content"].strip()}\n\n'
 
         file_variables = {
@@ -315,7 +317,8 @@ class downloader:
         }
         file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
         overwrite_original = self.overwrite
-        self.overwrite = True
+        if os.path.exists(file_path) and os.path.getsize(file_path) < len(announcements):
+            self.overwrite = True
         self.write_to_file(file_path, announcements)
         self.overwrite = overwrite_original
 
