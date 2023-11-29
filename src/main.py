@@ -592,16 +592,23 @@ class downloader:
             total += resume_size
 
         if not self.simulate:
-            if not os.path.exists(os.path.split(file['file_path'])[0]):
-                os.makedirs(os.path.split(file['file_path'])[0])
-            with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
-                start = time.time()
-                downloaded = resume_size
-                for chunk in response.iter_content(chunk_size=32*1024*1024):
-                    downloaded += len(chunk)
-                    f.write(chunk)
-                    print_download_bar(total, downloaded, resume_size, start)
-            print()
+            try:
+                if not os.path.exists(os.path.split(file['file_path'])[0]):
+                    os.makedirs(os.path.split(file['file_path'])[0])
+                with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
+                    start = time.time()
+                    downloaded = resume_size
+                    for chunk in response.iter_content(chunk_size=32*1024*1024):
+                        downloaded += len(chunk)
+                        f.write(chunk)
+                        print_download_bar(total, downloaded, resume_size, start)
+                print()
+            except Exception as exc:
+                if retry > 0:
+                    logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | Retrying")
+                    self.download_file(file, retry=retry-1, postid=postid)
+                    return
+                logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | All retries failed")
 
             # verify download
             local_hash = get_file_hash(part_file)
