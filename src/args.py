@@ -79,10 +79,6 @@ def get_args():
                     action='store_true', default=False,
                     help="Download the users profile banner. Only works when a user url is passed.")
 
-    ap.add_argument("--announcements",
-                    action='store_true', default=False,
-                    help="Download announcements (always overwrite). Only works when a user url is passed.")
-
     ap.add_argument("--yt-dlp",
                     action='store_true', default=False,
                     help="Try to download the post embed with yt-dlp.")
@@ -254,6 +250,10 @@ def get_args():
     ap.add_argument("--cccp",
                     action=argparse.BooleanOptionalAction, default=False,
                     help='Change all input links (--links and --from-file) to .su domain links.')
+
+    ap.add_argument("--announcements",
+                    action=argparse.BooleanOptionalAction, default=False,
+                    help="Download announcements (always overwrite if site return more content than local one). Only works when a user url is passed.")
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}
