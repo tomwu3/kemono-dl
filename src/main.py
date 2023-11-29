@@ -612,11 +612,17 @@ class downloader:
                         puff = bytes()
                 print()
             except Exception as exc:
+                # assuming puffered content is good
+                with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
+                    f.write(puff)
+                    puff = bytes()
                 if retry > 0:
                     logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | Retrying")
                     self.download_file(file, retry=retry-1, postid=postid)
                     return
                 logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | All retries failed")
+                self.post_errors += 1
+                return
 
             # verify download
             local_hash = get_file_hash(part_file)
