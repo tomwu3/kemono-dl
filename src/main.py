@@ -598,10 +598,18 @@ class downloader:
                 with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
                     start = time.time()
                     downloaded = resume_size
-                    for chunk in response.iter_content(chunk_size=32*1024*1024):
+                    iter_chunk_size = 1024*256
+                    puff = bytes()
+                    for chunk in response.iter_content(chunk_size=iter_chunk_size):
+                        puff += chunk
                         downloaded += len(chunk)
-                        f.write(chunk)
+                        if len(puff) >= (32*1024**2)//iter_chunk_size*iter_chunk_size:
+                            f.write(puff)
+                            puff = bytes()
                         print_download_bar(total, downloaded, resume_size, start)
+                    if puff:
+                        f.write(puff)
+                        puff = bytes()
                 print()
             except Exception as exc:
                 if retry > 0:
