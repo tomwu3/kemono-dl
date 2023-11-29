@@ -395,6 +395,8 @@ class downloader:
         new_post['post_variables']['updated'] = self.format_time_by_type(post['edited']) if post['edited'] else None
         new_post['post_variables']['user_updated'] = self.format_time_by_type(user['updated']) if user['updated'] else None
         new_post['post_variables']['published'] = self.format_time_by_type(post['published']) if post['published'] else None
+        new_post['post_variables']['tags'] = post['tags']
+        new_post['post_variables']['poll'] = post['poll']
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
