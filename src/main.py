@@ -631,12 +631,12 @@ class downloader:
                 with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
                     start = time.time()
                     downloaded = resume_size
-                    iter_chunk_size = 1024*256
+                    iter_chunk_size = 256<<10
                     puff = bytes()
                     for chunk in response.iter_content(chunk_size=iter_chunk_size):
                         puff += chunk
                         downloaded += len(chunk)
-                        if len(puff) >= (32*1024**2)//iter_chunk_size*iter_chunk_size:
+                        if len(puff) >= (32<<20)//iter_chunk_size*iter_chunk_size:
                             f.write(puff)
                             puff = bytes()
                         print_download_bar(total, downloaded, resume_size, start)
