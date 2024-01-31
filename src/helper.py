@@ -48,19 +48,27 @@ def get_file_hash(file:str,blksize:int=32<<20):
             sha256_hash.update(byte_block)
     return sha256_hash.hexdigest().lower()
 
-# clean folder name for windows
+# clean folder name for windows & linux
 def clean_folder_name(folder_name:str):
     if not folder_name.rstrip():
         folder_name = '_'
-    return re.sub(r'[\x00-\x1f\\/:\"*?<>\|]|\.$','_',folder_name.rstrip())[:248]
+    name_clean = re.sub(r'[\x00-\x1f\\/:\"*?<>\|]|\.$','_',folder_name.rstrip())[:248]
+    while len(name_clean.encode('utf-8','replace')) > 255: # filename length limit: windows is 255 *characters*, linux is 255 *bytes* unless you are HACKERMAN and hacked the kernel
+        name_clean = name_clean[:-1]
+    return name_clean
 
-# clean file name for windows
+# clean file name for windows & linux
 def clean_file_name(file_name:str):
     if not file_name:
         file_name = '_'
     file_name = re.sub(r'[\x00-\x1f\\/:\"*?<>\|]','_', file_name)
     file_name, file_extension = os.path.splitext(file_name)
-    return file_name[:255-len(file_extension)-5] + file_extension
+    name_limit = 255-len(file_extension)-5
+    name_clean = file_name[:name_limit] + file_extension
+    while len(name_clean.encode('utf-8','replace')) > 255: # same thing
+        name_limit -= 1
+        name_clean = file_name[:name_limit] + file_extension
+    return name_clean
 
 def restrict_ascii(string:str):
     return re.sub(r'[^\x21-\x7f]','_',string)
