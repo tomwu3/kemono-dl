@@ -211,13 +211,13 @@ class downloader:
                     if self.announcements:
                         self.write_announcements(post_tmp)
                     first = False
-                post['site']=site
-                if self.archive_file:
-                    if self.skip_post(post,True):
-                        continue
-                post = self.clean_post(post, user, site)
-                if self.skip_post(post,False):
+                comments_original=self.comments
+                self.comments=False
+                post_tmp = self.clean_post(post, user, site)
+                if self.skip_post(post_tmp):
                     continue
+                self.comments=comments_original
+                post = self.clean_post(post, user, site)
                 try:
                     self.download_post(post)
                     if self.post_timeout:
@@ -736,16 +736,14 @@ class downloader:
                 return True
         return False
 
-    def skip_post(self, post:dict, check_archive_only:bool):
+    def skip_post(self, post:dict):
         # check if the post should be downloaded
-        if self.archive_file and check_archive_only:
-            post_url = "https://{site}/{service}/user/{user}/post/{id}".format(**post)
-            post_url_another = post_url.replace('.su','.party') if post['site'].endswith('.su') else post_url.replace('.party','.su')
+        if self.archive_file:
+            post_url = "https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables'])
+            post_url_another = post_url.replace('.su','.party') if post['post_variables']['site'].endswith('.su') else post_url.replace('.party','.su')
             if post_url in self.archive_list or post_url_another in self.archive_list:
-                logger.info(f"Skipping post {post['id']} | post already archived") # add some numbers to indicate that the script isn't frozen when a lot of posts skipped and your screen is full of this message
+                logger.info(f"Skipping post {post['post_variables']['id']} | post already archived") # add some numbers to indicate that the script isn't frozen when a lot of posts skipped and your screen is full of this message
                 return True
-            elif check_archive_only:
-                return False
 
         if self.date or self.datebefore or self.dateafter:
             if not post['post_variables']['published']:
