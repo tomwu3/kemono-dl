@@ -143,14 +143,14 @@ class downloader:
             return
         for favorite in response.json():
             if fav_type == 'post':
-                self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['user']}/post/{favorite['id']}")
+                self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['user']}/post/{favorite['id']}", retry=self.retry)
             if fav_type == 'artist':
                 if not (favorite['service'] in services or 'all' in services):
                     logger.info(f"Skipping user {favorite['name']} | Service {favorite['service']} was not requested")
                     continue
-                self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['id']}")
+                self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['id']}", retry=self.retry)
 
-    def get_post(self, url:str):
+    def get_post(self, url:str, retry:int, chunk=0, first=True):
         found = re.search(r'(https://((?:kemono|coomer)\.(?:party|su))/)(([^/]+)/user/([^/]+)($|/post/[^/]+))', url)
         if not found:
             logger.error(f"Unable to find url parameters for {url}")
@@ -171,15 +171,26 @@ class downloader:
             if self.skip_user(user):
                 return
         logger.info(f"Downloading posts from {site} | {service} | {user['name']} | {user['id']}")
-        chunk = 0
-        first = True
         while True:
             if is_post:
                 logger.debug(f"Requesting post json from: {api}")
-                json = self.session.get(url=api, cookies=self.cookies, headers=self.headers, timeout=self.timeout).json()
+                response = self.session.get(url=api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                if response.status_code == 429:
+                    logger.warning(f"Failed to request post json from: {api} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
+                    time.sleep(self.ratelimit_sleep)
+                    if retry > 0:
+                        self.get_post(url=url, retry=retry-1, chunk=chunk, first=first)
+                    return
             else:
                 logger.debug(f"Requesting user json from: {api}?o={chunk}")
-                json = self.session.get(url=f"{api}?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout).json()
+                response = self.session.get(url=f"{api}?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                if response.status_code == 429:
+                    logger.warning(f"Failed to request user json from: {api}?o={chunk} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
+                    time.sleep(self.ratelimit_sleep)
+                    if retry > 0:
+                        self.get_post(url=url, retry=retry-1, chunk=chunk, first=first)
+                    return
+            json = response.json()
             if not json:
                 if is_post:
                     logger.error(f"Unable to find post json for {api}")
@@ -192,7 +203,7 @@ class downloader:
                 # only download once
                 if not is_post and first:
                     post_tmp = self.clean_post(post, user, site)
-                    self.download_icon_banner(post_tmp, self.icon_banner)
+                    self.download_icon_banner(post_tmp, self.icon_banner, retry=self.retry)
                     if self.dms:
                         self.write_dms(post_tmp)
                     if self.fancards:
@@ -221,7 +232,7 @@ class downloader:
             chunk += chunk_size
 
 
-    def download_icon_banner(self, post:dict, img_types:list):
+    def download_icon_banner(self, post:dict, img_types:list, retry:int):
         for img_type in img_types:
             if post['post_variables']['service'] in {'dlsite'}:
                 logger.warning(f"Profile {img_type}s are not supported for {post['post_variables']['service']} users")
@@ -231,6 +242,14 @@ class downloader:
                 continue
             image_url = "https://{site}/{img_type}s/{service}/{user_id}".format(img_type=img_type, **post['post_variables'])
             response = self.session.get(url=image_url,headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+            if response.status_code == 429:
+                logger.warning(f"Unable to download profile {img_type} for {post['post_variables']['username']} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
+                time.sleep(self.ratelimit_sleep)
+                if retry > 0:
+                    self.download_icon_banner(post=post, img_types=img_types, retry=retry-1)
+                else:
+                    logger.error(f"Unable to download profile {img_type} for {post['post_variables']['username']} | 429 Too Many Requests | All retry attemps failed")
+                return
             try:
                 image = Image.open(BytesIO(response.content))
                 file_variables = {
@@ -357,11 +376,16 @@ class downloader:
         }
         post['links']['file_path'] = compile_file_path(post['post_path'], post['post_variables'], post['links']['file_variables'], self.other_filename_template, self.restrict_ascii)
 
-    def get_comments(self, post_variables:dict):
+    def get_comments(self, post_variables:dict, retry:int):
         try:
             # no api method to get comments so using from html (not future proof)
             post_url = "https://{site}/{service}/user/{user_id}/post/{id}".format(**post_variables)
             response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+            if response.status_code == 429:
+                logger.warning(f"Failed to get post comments | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
+                time.sleep(self.ratelimit_sleep)
+                if retry > 0:
+                    return self.get_comments(post_variables=post_variables, retry=retry-1)
             page_soup = BeautifulSoup(response.text, 'html.parser')
             comment_soup = page_soup.find("div", {"class": "post__comments"})
             no_comments = re.search('([^ ]+ does not support comment scraping yet\.|No comments found for this post\.)',comment_soup.text)
@@ -427,7 +451,7 @@ class downloader:
         if self.inline:
             content_soup = self.get_inline_images(new_post, content_soup)
 
-        comment_soup = self.get_comments(new_post['post_variables']) if self.comments else ''
+        comment_soup = self.get_comments(new_post['post_variables'], retry=self.retry) if self.comments else ''
 
         new_post['content'] = {'text':None,'file_variables':None, 'file_path':None}
         embed = "{subject}\n{url}\n{description}".format(**post['embed']) if post['embed'] else ''
@@ -889,7 +913,7 @@ class downloader:
 
         for url in urls:
             try:
-                self.get_post(url)
+                self.get_post(url, retry=self.retry)
             except:
                 logger.exception(f"Unable to get posts for {url}")
 
