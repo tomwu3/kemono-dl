@@ -95,6 +95,7 @@ class downloader:
         self.simulate = args['simulate']
         self.local_hash = args['local_hash']
         self.dupe_check = args['dupe_check']
+        self.dupe_check_template = args['dupe_check_pattern']
         self.force_unlisted = args['force_unlisted']
         self.retry_403 = args['retry_403']
         self.fp_added = args['fp_added']
@@ -311,7 +312,7 @@ class downloader:
                 'referer':post_url
             }
             file_path = compile_file_path(os.path.join(post['post_path'],'Fancards'), post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
-            self.download_file({"file_path":file_path,"file_variables":file_variables}, retry=self.retry, postid='dummy postid') #dummy postid
+            self.download_file({"file_path":file_path,"file_variables":file_variables}, retry=self.retry, post=post) #dummy postid
 
     def write_announcements(self, post:dict):
         post_url = "https://{site}/api/v1/{service}/user/{user_id}/announcements".format(**post['post_variables'])
@@ -483,7 +484,7 @@ class downloader:
         # download the post attachments
         for file in post['attachments']:
             try:
-                self.download_file(file, retry=self.retry, postid=post['post_variables']['id'])
+                self.download_file(file, retry=self.retry, post=post)
             except:
                 self.post_errors += 1
                 logger.exception(f"Failed to download: {file['file_path']}")
@@ -492,7 +493,7 @@ class downloader:
         # download the post inline files
         for file in post['inline_images']:
             try:
-                self.download_file(file, retry=self.retry, postid=post['post_variables']['id'])
+                self.download_file(file, retry=self.retry, post=post)
             except:
                 self.post_errors += 1
                 logger.exception(f"Failed to download: {file['file_path']}")
@@ -555,9 +556,9 @@ class downloader:
         with open(file_path,'a') as f:
             print(file_content, file=f)
 
-    def download_file(self, file:dict, retry:int, postid):
+    def download_file(self, file:dict, retry:int, post:dict):
         # download a file
-        if self.skip_file(file,postid=postid):
+        if self.skip_file(file,post=post):
             return
 
         part_file = f"{file['file_path']}.part" if not self.no_part else file['file_path']
@@ -577,7 +578,7 @@ class downloader:
         except:
             logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
             if retry > 0:
-                self.download_file(file, retry=retry-1, postid=postid)
+                self.download_file(file, retry=retry-1, post=post)
                 return
             logger.error(f"Failed to get responce: {file['file_variables']['url']} | All retries failed")
             self.post_errors += 1
@@ -597,7 +598,7 @@ class downloader:
                 except:
                     logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
                     if retry > 0:
-                        self.download_file(file, retry=retry-1, postid=postid)
+                        self.download_file(file, retry=retry-1, post=post)
                         return
                     logger.error(f"Failed to get responce: {file['file_variables']['url']} | All retries failed")
                     self.post_errors += 1
@@ -634,7 +635,7 @@ class downloader:
             logger.warning(f"Failed to download: {os.path.split(file['file_path'])[1]} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
             time.sleep(self.ratelimit_sleep)
             if retry > 0:
-                self.download_file(file, retry=retry-1, postid=postid)
+                self.download_file(file, retry=retry-1, post=post)
                 return
             logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 429 Too Many Requests | All retries failed")
             self.post_errors += 1
@@ -675,7 +676,7 @@ class downloader:
                     puff = bytes()
                 if retry > 0:
                     logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | Retrying")
-                    self.download_file(file, retry=retry-1, postid=postid)
+                    self.download_file(file, retry=retry-1, post=post)
                     return
                 logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | Exception: {exc} | All retries failed")
                 self.post_errors += 1
@@ -691,7 +692,7 @@ class downloader:
                     if os.path.getsize(part_file)==total:
                         os.remove(part_file)
                     if retry > 0:
-                        self.download_file(file, retry=retry-1, postid=postid)
+                        self.download_file(file, retry=retry-1, post=post)
                         return
                     logger.error(f"File hash did not match server! | All retries failed")
                     self.post_errors += 1
@@ -776,7 +777,7 @@ class downloader:
         
         return False
 
-    def skip_file(self, file:dict, postid):
+    def skip_file(self, file:dict, post:dict):
         # check if file exists
         if not self.overwrite:
             if os.path.exists(file['file_path']):
@@ -795,8 +796,11 @@ class downloader:
                 if file["file_variables"].get("index") is not None:
                     fp_cur=pathlib.Path(file['file_path'])
                     fp_par=fp_cur.parent
-                    similar=fp_par.glob(f'{file["file_variables"]["index"]}_*')
-                    similar2=fp_par.parent.glob(f'*{postid}*/{file["file_variables"]["index"]}_*')
+                    templates=self.dupe_check_template.split(',')
+                    pattern=templates[0].format(**file['file_variables'], **post['post_variables'])
+                    pattern2=templates[1].format(**file['file_variables'], **post['post_variables'])
+                    similar=fp_par.glob(pattern)
+                    similar2=fp_par.parent.glob(pattern2)
                     for x in itertools.chain(similar,similar2):
                         if 'hash' in file['file_variables'] and file['file_variables']['hash'] != None:
                             sim_hash = get_file_hash(str(x))
