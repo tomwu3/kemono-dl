@@ -132,6 +132,9 @@ Hash check before skip existing files. (default: False)
 Look for same index file with similar name and compare to server hash to prevent duplicate downloads. Works only for naming schemes starts with index, for now (maybe). (default: True)    
 > *notice: idk if two args above works together or not, i'll probably never use options other than these two defaults because that's why i make them default. if you use them and have issues please report.*
 
+`--dupe-check-pattern`    
+Specify two patterns used by dupe-check, one for search inside folder, one for search in parent folder, separated by comma. Please include wildcard. (default: "{index}_\*,\*{id}\*/{index}_\*")    
+Default is to look for files with same index within same folder and "neighbor" folder with same post id (useful when using default file/folder name pattern).    
 `--[no-]force-unlisted`    
 Still try to request api if user is not found in creators list. Use carefully. (default: False)    
 `--retry-403 COUNT`    
