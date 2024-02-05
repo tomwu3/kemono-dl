@@ -203,15 +203,26 @@ class downloader:
             for post in json:
                 # only download once
                 if not is_post and first:
-                    post_tmp = self.clean_post(post, user, site)
-                    self.download_icon_banner(post_tmp, self.icon_banner, retry=self.retry)
-                    if self.dms:
-                        self.write_dms(post_tmp)
-                    if self.fancards:
-                        self.download_fancards(post_tmp)
-                    if self.announcements:
-                        self.write_announcements(post_tmp)
-                    first = False
+                    try:
+                        post_tmp = self.clean_post(post, user, site)
+                        logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
+                        self.download_icon_banner(post_tmp, self.icon_banner, retry=self.retry)
+                        if self.dms:
+                            logger.debug(f"Writting dms | {user['name']} | {user['id']}")
+                            self.write_dms(post_tmp)
+                        if self.fancards:
+                            logger.debug(f"Downloading fancards | {user['name']} | {user['id']}")
+                            self.download_fancards(post_tmp)
+                        if self.announcements:
+                            logger.debug(f"Writting announcements | {user['name']} | {user['id']}")
+                            self.write_announcements(post_tmp)
+                        first = False
+                    except:
+                        logger.warning(f"Failed to get icon, banner, dms, fancards or announcements | Probably 429 | Sleeping for {self.ratelimit_sleep} seconds")
+                        time.sleep(self.ratelimit_sleep)
+                        if retry > 0:
+                            self.get_post(url=url, retry=retry-1, chunk=chunk, first=True)
+                        return
                 comments_original=self.comments
                 self.comments=False
                 post_tmp = self.clean_post(post, user, site)
