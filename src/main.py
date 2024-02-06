@@ -902,7 +902,6 @@ class downloader:
             logger.error("No creator information was retrieved. | exiting")
             exit()
 
-        # TODO retry not implemented
         if self.k_fav_posts:
             try:
                 self.get_favorites(self.cookie_domains['kemono'], 'post', retry=self.retry)
