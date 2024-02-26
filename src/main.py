@@ -106,7 +106,7 @@ class downloader:
         retries = Retry(
             total=self.retry,
             backoff_factor=0.1,
-            status_forcelist=[ 500, 502, 504 ]
+            status_forcelist=[ 500, 502, 503, 504 ]
         )
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         self.session.mount('http://', HTTPAdapter(max_retries=retries))
@@ -288,9 +288,6 @@ class downloader:
             return
         post_url = "https://{site}/{service}/user/{user_id}/dms".format(**post['post_variables'])
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
-        if response.status_code == 503:
-            logger.error("Failed to get DMs for {user_id} | HTTP Error 503 | Skip DMs".format(**post['post_variables']))
-            return
         page_soup = BeautifulSoup(response.text, 'html.parser')
         if page_soup.find("div", {"class": "no-results"}):
             logger.info("No DMs found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
