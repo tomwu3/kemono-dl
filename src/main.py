@@ -447,7 +447,12 @@ class downloader:
             # loop over attachments and set file variables
             for index, attachment in enumerate(post['attachments']):
                 file = {}
-                filename, file_extension = os.path.splitext(attachment['name'])
+                if isinstance(attachment.get('name'),str):
+                    filename, file_extension = os.path.splitext(attachment['name'])
+                elif isinstance(attachment.get('path'),str):
+                    filename, file_extension = os.path.splitext(attachment['path'].split('/')[-1])
+                else:
+                    continue
                 m = re.search(r'[a-zA-Z0-9]{64}', attachment['path'])
                 file_hash = m.group(0) if m else None
                 file['file_variables'] = {
