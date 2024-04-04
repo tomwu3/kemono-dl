@@ -477,9 +477,9 @@ class downloader:
             # loop over attachments and set file variables
             for index, attachment in enumerate(post['attachments']):
                 file = {}
-                if isinstance(attachment.get('name'),str):
+                if attachment.get('name') and isinstance(attachment.get('name'),str):
                     filename, file_extension = os.path.splitext(attachment['name'])
-                elif isinstance(attachment.get('path'),str):
+                elif attachment.get('path') and isinstance(attachment.get('path'),str):
                     filename, file_extension = os.path.splitext(attachment['path'].split('/')[-1])
                 else:
                     continue
