@@ -34,6 +34,8 @@ class downloader:
         self.cookies = args['cookies']
         self.timeout = 300
 
+        self.headcheck = args['head_check']
+
         # file/folder naming
         self.download_path_template = args['dirname_pattern']
         self.filename_template = args['filename_pattern']
@@ -625,6 +627,8 @@ class downloader:
             request_headers['Range']=f"bytes={resume_size}-"
 
         try:
+            if self.headcheck:
+                head_ref = self.session.get(url=file['file_variables']['url'], stream=False, headers=dict(**self.headers,**{'Range':f'bytes={resume_size}-{resume_size+1023}'}), cookies=self.cookies, timeout=self.timeout).content
             response = self.session.get(url=file['file_variables']['url'], stream=True, headers=dict(**self.headers,**request_headers), cookies=self.cookies, timeout=self.timeout)
         except:
             logger.exception(f"Failed to get responce: {file['file_variables']['url']} | Retrying")
@@ -704,12 +708,18 @@ class downloader:
             try:
                 if not os.path.exists(os.path.split(file['file_path'])[0]):
                     os.makedirs(os.path.split(file['file_path'])[0])
+                first_chunk=True
                 with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
                     start = time.time()
                     downloaded = resume_size
                     iter_chunk_size = 256<<10
                     puff = bytes()
                     for chunk in response.iter_content(chunk_size=iter_chunk_size):
+                        if first_chunk:
+                            first_chunk=False
+                            if self.headcheck:
+                                if chunk[:len(head_ref)]!=head_ref:
+                                    raise Exception("Head Check Mismatch")
                         puff += chunk
                         downloaded += len(chunk)
                         if len(puff) >= (32<<20)//iter_chunk_size*iter_chunk_size:
