@@ -3,6 +3,7 @@ import datetime
 import re
 import argparse
 from http.cookiejar import MozillaCookieJar, LoadError
+from urllib.parse import urlparse, urlunparse
 
 from .version import __version__
 
@@ -262,6 +263,10 @@ def get_args():
     ap.add_argument("--head-check",
                     action=argparse.BooleanOptionalAction, default=False,
                     help="Check some first bytes of downloaded content with a separate request to fail quick if weird thing happend.")
+    ap.add_argument("--proxy-agent",
+                    metavar="https://agent/proxy", type=str, default=None,
+                    help="Proxy agent URL. This is NOT standrad http/s proxy. Pass 'u' parameter to agent for proxying. Not enabled by default. "
+                            "Enable this you can not download kemono and commer at once.")
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}
@@ -400,5 +405,21 @@ def get_args():
             print(f"--coomer-fav-users no valid options were passed")
         args['coomer_fav_users'] = temp
 
+    if args['proxy_agent']:
+        u = urlparse(args['proxy_agent'])
+        if not u.netloc or not u.path:
+            print(f"Bad proxy agent url | Url shoule be something like https://example.com/agent"), exit()
+        if not u.scheme:
+            u.scheme = 'http'
+        args['proxy_agent'] = urlunparse(u)
+
+        # we should change cookie domain to proxy agent
+        new_cookies = MozillaCookieJar()
+        for cookie in args['cookies']:
+            cookie.domain = f'.{u.netloc}'
+            cookie.domain_specified = True
+            cookie.domain_initial_dot = True
+            new_cookies.set_cookie(cookie)
+        args['cookies'] = new_cookies
 
     return args

@@ -103,8 +103,9 @@ class downloader:
         self.fp_added = args['fp_added']
         self.fancards = args['fancards']
         self.cookie_domains = args['cookie_domains']
+        self.proxy_agent = args['proxy_agent']
 
-        self.session = RefererSession()
+        self.session = RefererSession(proxy_agent = self.proxy_agent)
         retries = Retry(
             total=self.retry,
             backoff_factor=0.1,
