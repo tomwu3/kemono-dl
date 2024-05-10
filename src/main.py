@@ -184,19 +184,13 @@ class downloader:
                 logger.debug(f"Requesting post json from: {api}")
                 response = self.session.get(url=api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
-                    logger.warning(f"Failed to request post json from: {api} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
-                    time.sleep(self.ratelimit_sleep)
-                    if retry > 0:
-                        self.get_post(url=url, retry=retry-1, chunk=chunk, first=first)
+                    logger.warning(f"Failed to request post json from: {api} | 429 Too Many Requests | All retries failed")
                     return
             else:
                 logger.debug(f"Requesting user json from: {api}?o={chunk}")
                 response = self.session.get(url=f"{api}?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
-                    logger.warning(f"Failed to request user json from: {api}?o={chunk} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
-                    time.sleep(self.ratelimit_sleep)
-                    if retry > 0:
-                        self.get_post(url=url, retry=retry-1, chunk=chunk, first=first)
+                    logger.warning(f"Failed to request user json from: {api}?o={chunk} | 429 Too Many Requests | All retries failed")
                     return
             json = response.json()
             if not json:
@@ -225,10 +219,11 @@ class downloader:
                             self.write_announcements(post_tmp,retry=self.retry)
                         first = False
                     except:
-                        logger.warning(f"Failed to get icon, banner, dms, fancards or announcements | Probably 429 | Sleeping for {self.ratelimit_sleep} seconds")
-                        time.sleep(self.ratelimit_sleep)
                         if retry > 0:
+                            logger.warning(f"Failed to get icon, banner, dms, fancards or announcements | Retrying")
                             self.get_post(url=url, retry=retry-1, chunk=chunk, first=True)
+                        else:
+                            logger.error(f"Failed to get icon, banner, dms, fancards or announcements | All retries failed")
                         return
                 comments_original=self.comments
                 self.comments=False
@@ -262,12 +257,7 @@ class downloader:
             image_url = "https://{site}/{img_type}s/{service}/{user_id}".format(img_type=img_type, **post['post_variables'])
             response = self.session.get(url=image_url,headers=self.headers, cookies=self.cookies, timeout=self.timeout)
             if response.status_code == 429:
-                logger.warning(f"Unable to download profile {img_type} for {post['post_variables']['username']} | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
-                time.sleep(self.ratelimit_sleep)
-                if retry > 0:
-                    self.download_icon_banner(post=post, img_types=img_types, retry=retry-1)
-                else:
-                    logger.error(f"Unable to download profile {img_type} for {post['post_variables']['username']} | 429 Too Many Requests | All retry attemps failed")
+                logger.error(f"Unable to download profile {img_type} for {post['post_variables']['username']} | 429 Too Many Requests | All retries failed")
                 return
             try:
                 image = Image.open(BytesIO(response.content))
@@ -297,14 +287,14 @@ class downloader:
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
-                logger.warning("Unable to download DMs for {service} {user_id} | 429 | Sleeping for {sec} seconds.".format(sec=self.ratelimit_sleep,**post['post_variables']))
-                time.sleep(self.ratelimit_sleep)
+                logger.warning("Unable to download DMs for {service} {user_id} | 429 | All retries failed".format(**post['post_variables']))
+                return
             else:
                 logger.warning("Unable to download DMs for {service} {user_id} | {code} | Retrying.".format(core=response.status_code,**post['post_variables']))
             if retry > 0:
                 self.write_dms(post=post,retry=retry-1)
             else:
-                logger.error("Unable to download DMs for {service} {user_id} | {code} | All retry attempts failed.".format(core=response.status_code,**post['post_variables']))
+                logger.error("Unable to download DMs for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
         page_soup = BeautifulSoup(response.text, 'html.parser')
         if page_soup.find("div", {"class": "no-results"}):
@@ -328,14 +318,14 @@ class downloader:
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
-                logger.warning("Unable to find Fancards for {service} {user_id} | 429 | Sleeping for {sec} seconds.".format(sec=self.ratelimit_sleep,**post['post_variables']))
-                time.sleep(self.ratelimit_sleep)
+                logger.warning("Unable to find Fancards for {service} {user_id} | 429 | All retries failed".format(**post['post_variables']))
+                return
             else:
                 logger.warning("Unable to find Fancards for {service} {user_id} | {code} | Retrying.".format(core=response.status_code,**post['post_variables']))
             if retry > 0:
                 self.download_fancards(post=post,retry=retry-1)
             else:
-                logger.error("Unable to find Fancards for {service} {user_id} | {code} | All retry attempts failed.".format(core=response.status_code,**post['post_variables']))
+                logger.error("Unable to find Fancards for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
         page_soup = BeautifulSoup(response.text, 'html.parser')
         if page_soup.find("div", {"class": "no-results"}):
@@ -362,14 +352,14 @@ class downloader:
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
-                logger.warning("Unable to get announcements for {service} {user_id} | 429 | Sleeping for {sec} seconds.".format(sec=self.ratelimit_sleep,**post['post_variables']))
-                time.sleep(self.ratelimit_sleep)
+                logger.warning("Unable to get announcements for {service} {user_id} | 429 | All retries failed".format(**post['post_variables']))
+                return
             else:
                 logger.warning("Unable to get announcements for {service} {user_id} | {code} | Retrying.".format(core=response.status_code,**post['post_variables']))
             if retry > 0:
                 self.write_announcements(post=post,retry=retry-1)
             else:
-                logger.error("Unable to get announcements for {service} {user_id} | {code} | All retry attempts failed.".format(core=response.status_code,**post['post_variables']))
+                logger.error("Unable to get announcements for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
         if not len(response.json()):
             logger.info("No announcements found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
@@ -434,10 +424,7 @@ class downloader:
             post_url = "https://{site}/{service}/user/{user_id}/post/{id}".format(**post_variables)
             response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
             if response.status_code == 429:
-                logger.warning(f"Failed to get post comments | 429 Too Many Requests | Sleeping for {self.ratelimit_sleep} seconds")
-                time.sleep(self.ratelimit_sleep)
-                if retry > 0:
-                    return self.get_comments(post_variables=post_variables, retry=retry-1)
+                logger.warning(f"Failed to get post comments | 429 Too Many Requests | All retries failed")
             page_soup = BeautifulSoup(response.text, 'html.parser')
             comment_soup = page_soup.find("div", {"class": "post__comments"})
             no_comments = re.search('([^ ]+ does not support comment scraping yet\.|No comments found for this post\.)',comment_soup.text)
