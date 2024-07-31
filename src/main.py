@@ -612,6 +612,17 @@ class downloader:
         logger.debug(f"Downloading to: {part_file}")
 
         request_headers={'Referer':file['file_variables']['referer']}
+
+        url_pre_redir=file['file_variables']['url']
+        url_redir=None
+        if url_pre_redir.startswith('https://kemono') or url_pre_redir.startswith('https://coomer'):
+            resp=self.session.get(url=url_pre_redir, stream=False, headers=dict(**self.headers,**request_headers), cookies=self.cookies, timeout=self.timeout, allow_redirects=False)
+            if resp.status_code == 302:
+                url_redir = resp.headers['Location']
+                if url_redir.startswith('https://n'):
+                    url_redir=url_redir.replace('https://n','https://c')
+                file['file_variables']['url'] = url_redir
+
         # try to resume part file
         resume_size = 0
         if os.path.exists(part_file) and not self.overwrite and os.path.getsize(part_file):
