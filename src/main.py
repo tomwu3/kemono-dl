@@ -105,6 +105,7 @@ class downloader:
         self.fancards = args['fancards']
         self.cookie_domains = args['cookie_domains']
         self.proxy_agent = args['proxy_agent']
+        self.force_dss = args['force_dss']
 
         self.session = RefererSession(
             proxy_agent = self.proxy_agent,
@@ -128,6 +129,8 @@ class downloader:
         # get site creators
         creators_api = f"https://{domain}/api/v1/creators.txt"
         logger.debug(f"Getting creator json from {creators_api}")
+        if self.force_unlisted:
+            return []
         return self.session.get(url=creators_api, cookies=self.cookies, headers=self.headers, timeout=self.timeout).json()
 
     def get_user(self, user_id:str, service:str):
@@ -613,15 +616,18 @@ class downloader:
 
         request_headers={'Referer':file['file_variables']['referer']}
 
-        url_pre_redir=file['file_variables']['url']
-        url_redir=None
-        if url_pre_redir.startswith('https://kemono') or url_pre_redir.startswith('https://coomer'):
-            resp=self.session.get(url=url_pre_redir, stream=False, headers=dict(**self.headers,**request_headers), cookies=self.cookies, timeout=self.timeout, allow_redirects=False)
-            if resp.status_code == 302:
-                url_redir = resp.headers['Location']
-                if url_redir.startswith('https://n'):
-                    url_redir=url_redir.replace('https://n','https://c')
-                file['file_variables']['url'] = url_redir
+        if self.force_dss:
+            dss_letter=isinstance(self.force_dss,str) and self.force_dss[0]
+            url_pre_redir=file['file_variables']['url']
+            url_redir=None
+            if url_pre_redir.startswith('https://kemono') or url_pre_redir.startswith('https://coomer'):
+                resp=self.session.get(url=url_pre_redir, stream=False, headers=dict(**self.headers,**request_headers), cookies=self.cookies, timeout=self.timeout, allow_redirects=False)
+                if resp.status_code == 302:
+                    url_redir = resp.headers['Location']
+                    url_match = re.match('(https://[a-z])[0-9]\.',url_redir)
+                    if url_match:
+                        url_redir=url_redir.replace(url_match.group(1),'https://'+dss_letter)
+                    file['file_variables']['url'] = url_redir
 
         # try to resume part file
         resume_size = 0
@@ -949,7 +955,7 @@ class downloader:
                 self.creators += self.get_creators(domain)
             except:
                 logger.exception(f"Unable to get list of creators from {domain}")
-        if not self.creators:
+        if not self.creators and not self.force_unlisted:
             logger.error("No creator information was retrieved. | exiting")
             exit()
 

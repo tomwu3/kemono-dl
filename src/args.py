@@ -242,7 +242,7 @@ def get_args():
 
     ap.add_argument("--force-unlisted",
                     action=argparse.BooleanOptionalAction, default=False,
-                    help='Still try to request api if user is not found in creators list. Use carefully.')
+                    help='Request user api without obtaining all creators list. Potential use case: the user is unlisted or the creators list api is down. Username will be unavailable and replaced by user id. Use carefully.')
 
     ap.add_argument("--retry-403",
                     metavar='COUNT', type=int, default=0,
@@ -267,10 +267,15 @@ def get_args():
     ap.add_argument("--head-check",
                     action=argparse.BooleanOptionalAction, default=False,
                     help="Check some first bytes of downloaded content with a separate request to fail quick if weird thing happend.")
+    
     ap.add_argument("--proxy-agent",
                     metavar="https://agent/proxy", type=str, default=None,
                     help="Proxy agent URL. This is NOT standrad http/s proxy. Pass 'u' parameter to agent for proxying. Not enabled by default. "
                             "Enable this you can not download kemono and commer at once.")
+    
+    ap.add_argument("--force-dss",
+                    metavar='LETTER', type=str, default=None,
+                    help='Force Data Server Series.')
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}
