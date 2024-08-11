@@ -16,7 +16,7 @@ from .args import get_args
 from .logger import logger
 from .version import __version__
 from .helper import get_file_hash, print_download_bar, check_date, parse_url, compile_post_path, compile_file_path, RefererSession
-from .my_yt_dlp import my_yt_dlp
+# from .my_yt_dlp import my_yt_dlp
 
 class downloader:
 
