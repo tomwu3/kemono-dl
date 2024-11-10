@@ -2,9 +2,9 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "armv7" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "armv7" ]
+    branches: [ "main" ]
 
 jobs:
 
@@ -16,7 +16,7 @@ jobs:
           - name: Checkout main
             uses: actions/checkout@v3
             with:
-              ref: armv7
+              ref: main
           
           - name: Set up Docker Buildx
             uses: docker/setup-buildx-action@v2
@@ -26,6 +26,7 @@ jobs:
             with:
               name: junlinwu/kemono-dl # dockerid/imageName
               platforms: linux/arm
+              dockerfile: Dockerfile-armv7
               tags: latest
               username: ${{ secrets.DOCKERHUB_USERNAME }} # docker hub userid 在setting创建secrets name=DOCKER_USERNAME  value=dockerid
               password: ${{ secrets.DOCKERHUB_TOKEN }} # docker hub password,在setting创建secrets name=DOCKER_PASSWORD  value=dockerpassword
