@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY  . ./
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r --no-cache-dir requirements.txt
 
-CMD ["python kemono-dl.py", "-help"] #
+ENTRYPOINT ["python", "kemono-dl.py"]
+
+CMD ["-help"] #
