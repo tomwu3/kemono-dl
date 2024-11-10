@@ -24,7 +24,7 @@ jobs:
           - name: Build and publish image
             uses: elgohr/Publish-Docker-Github-Action@v5
             with:
-              name: junlinwu/kemono-dl # dockerid/imageName
+              name: junlinwu/kemono-dl-armv7 # dockerid/imageName
               platforms: linux/arm
               dockerfile: Dockerfile-armv7
               tags: latest
