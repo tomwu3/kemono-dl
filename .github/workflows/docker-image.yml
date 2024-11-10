@@ -23,7 +23,7 @@ jobs:
             uses: elgohr/Publish-Docker-Github-Action@v5
             with:
               name: junlinwu/kemono-dl # dockerid/imageName
-              platforms: linux/arm,linux/arm64,linux/amd64
+              platforms: linux/arm64,linux/amd64
               tags: latest
               username: ${{ secrets.DOCKERHUB_USERNAME }} # docker hub userid 在setting创建secrets name=DOCKER_USERNAME  value=dockerid
               password: ${{ secrets.DOCKERHUB_TOKEN }} # docker hub password,在setting创建secrets name=DOCKER_PASSWORD  value=dockerpassword
