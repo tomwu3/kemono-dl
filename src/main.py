@@ -739,7 +739,7 @@ class downloader:
                 print()
             except Exception as exc:
                 # assuming puffered content is good
-                with open(part_file, 'wb' if resume_size == 0 else 'ab') as f:
+                with open(part_file, 'ab') as f:
                     f.write(puff)
                     puff = bytes()
                 if retry > 0:
