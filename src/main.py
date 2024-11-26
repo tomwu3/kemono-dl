@@ -204,6 +204,8 @@ class downloader:
                 elif chunk == 0:
                     logger.error(f"Unable to find user json for {api}?o={chunk}")
                 return # completed
+            if is_post and isinstance(json, dict) and json.get('post'):
+                json = json.get('post')
             if not isinstance(json,list):
                 json=[json]
             for post in json:
