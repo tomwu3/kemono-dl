@@ -629,6 +629,23 @@ class downloader:
 
         request_headers={'Referer':file['file_variables']['referer']}
 
+        # archives password
+        if self.archives_password:
+            if file['file_variables']['ext'] in ('zip','7z','rar'):
+                passwd_json = None
+                try:
+                    passwd_api = "https://{site}/api/v0/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'])
+                    passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+                    passwd_json = passwd_resp.json()
+                except:
+                    pass
+                if passwd_json:
+                    if passwd_json.get('archive').get('password'):
+                        passwd_filevar = dict(file['file_variables'])
+                        passwd_filevar.update({'ext':'pw'})
+                        passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.filename_template, self.restrict_ascii)
+                        self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
+
         if self.force_dss:
             dss_letter=isinstance(self.force_dss,str) and self.force_dss[0]
             url_pre_redir=file['file_variables']['url']
@@ -691,7 +708,7 @@ class downloader:
         if response.status_code == 416:
             logger.warning(f"Failed to download: {os.path.split(file['file_path'])[1]} | 416 Range Not Satisfiable | Assuming broken server hash value")
             content_length = self.session.get(url=file['file_variables']['url'], stream=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout).headers.get('content-length', '')
-            if content_length == resume_size:
+            if int(content_length) == resume_size:
                 logger.debug("Correct amount of bytes downloaded | Assuming download completed successfully")
                 if self.overwrite:
                     os.replace(part_file, file['file_path'])
@@ -792,22 +809,6 @@ class downloader:
                 os.replace(part_file, file['file_path'])
             else:
                 os.rename(part_file, file['file_path'])
-            # archives password
-            if self.archives_password:
-                if file['file_variables']['ext'] in ('zip','7z','rar'):
-                    passwd_json = None
-                    try:
-                        passwd_api = "https://{site}/api/v0/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'])
-                        passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
-                        passwd_json = passwd_resp.json()
-                    except:
-                        pass
-                    if passwd_json:
-                        if passwd_json.get('archive').get('password'):
-                            passwd_filevar = dict(file['file_variables'])
-                            passwd_filevar.update({'ext':'pw'})
-                            passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.filename_template, self.restrict_ascii)
-                            self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
 
     def download_yt_dlp(self, post:dict):
         # download from video streaming site
