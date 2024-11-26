@@ -276,6 +276,10 @@ def get_args():
     ap.add_argument("--force-dss",
                     metavar='LETTER', type=str, default=None,
                     help='Force Data Server Series.')
+    
+    ap.add_argument("--archives-password",
+                    action=argparse.BooleanOptionalAction, default=True,
+                    help="Try look for passwords of archived file (zip, 7z, rar).")
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}

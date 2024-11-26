@@ -106,6 +106,7 @@ class downloader:
         self.cookie_domains = args['cookie_domains']
         self.proxy_agent = args['proxy_agent']
         self.force_dss = args['force_dss']
+        self.archives_password = args['archives_password']
 
         self.session = RefererSession(
             proxy_agent = self.proxy_agent,
@@ -789,6 +790,20 @@ class downloader:
                 os.replace(part_file, file['file_path'])
             else:
                 os.rename(part_file, file['file_path'])
+            # archives password
+            if self.archives_password:
+                if file['file_variables']['ext'] in ('zip','7z','rar'):
+                    passwd_json = None
+                    try:
+                        passwd_api = "https://{site}/api/v1/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'])
+                        passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+                        passwd_json = passwd_resp.json()
+                    except:
+                        pass
+                    if passwd_json:
+                        if passwd_json.get('archive').get('password'):
+                            passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], file['file_variables'].update({'ext':'pw'}), self.other_filename_template, self.restrict_ascii)
+                            self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
 
     def download_yt_dlp(self, post:dict):
         # download from video streaming site
