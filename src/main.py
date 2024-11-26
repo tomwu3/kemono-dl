@@ -423,20 +423,27 @@ class downloader:
         }
         post['links']['file_path'] = compile_file_path(post['post_path'], post['post_variables'], post['links']['file_variables'], self.other_filename_template, self.restrict_ascii)
 
-    def get_comments(self, post_variables:dict, retry:int):
+    def get_comments(self, post:dict):
         try:
-            # no api method to get comments so using from html (not future proof)
-            post_url = "https://{site}/{service}/user/{user_id}/post/{id}".format(**post_variables)
+            post_url = "https://{site}/api/v1/{service}/user/{user_id}/post/{id}/comments".format(**post['post_variables'])
             response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
             if response.status_code == 429:
                 logger.warning(f"Failed to get post comments | 429 Too Many Requests | All retries failed")
-            page_soup = BeautifulSoup(response.text, 'html.parser')
-            comment_soup = page_soup.find("div", {"class": "post__comments"})
-            no_comments = re.search('([^ ]+ does not support comment scraping yet\.|No comments found for this post\.)',comment_soup.text)
+            page_json = response.json()
+            no_comments = isinstance(page_json, dict) and page_json.get('error')
             if no_comments:
-                logger.debug(no_comments.group(1).strip())
+                logger.debug(page_json.get('error'))
                 return ''
-            return comment_soup.prettify()
+            comments_json = page_json if isinstance(page_json, list) else []
+            file_variables = {
+                'filename':'{dmc} comments'.format(dmc=len(comments_json)),
+                'ext':'json'
+            }
+            if isinstance(comments_json,list):
+                comments_json = dict(enumerate(comments_json))
+            file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.other_filename_template, self.restrict_ascii)
+            self.write_to_file(file_path, comments_json)
+            return True
         except:
             self.post_errors += 1
             logger.exception("Failed to get post comments")
@@ -500,7 +507,7 @@ class downloader:
         if self.inline:
             content_soup = self.get_inline_images(new_post, content_soup)
 
-        comment_soup = self.get_comments(new_post['post_variables'], retry=self.retry) if self.comments else ''
+        comment_soup = ''
 
         new_post['content'] = {'text':None,'file_variables':None, 'file_path':None}
         embed = "{subject}\n{url}\n{description}".format(**post['embed']) if post['embed'] else ''
@@ -521,6 +528,8 @@ class downloader:
         self.download_attachments(post)
         self.download_inline(post)
         self.write_content(post)
+        if self.comments:
+            self.get_comments(post)
         self.write_links(post)
         if self.json:
             self.write_json(post)
