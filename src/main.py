@@ -806,7 +806,7 @@ class downloader:
                         if passwd_json.get('archive').get('password'):
                             passwd_filevar = dict(file['file_variables'])
                             passwd_filevar.update({'ext':'pw'})
-                            passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.other_filename_template, self.restrict_ascii)
+                            passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.filename_template, self.restrict_ascii)
                             self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
 
     def download_yt_dlp(self, post:dict):
