@@ -36,6 +36,11 @@ class downloader:
 
         self.headcheck = args['head_check']
 
+        for i in ('/v1','/v0'):
+            self.api_ver = i
+            if requests.get(f'https://kemono.su/api{self.api_ver}/app_version').status_code == 200:
+                break
+
         # file/folder naming
         self.download_path_template = args['dirname_pattern']
         self.filename_template = args['filename_pattern']
@@ -128,7 +133,7 @@ class downloader:
 
     def get_creators(self, domain:str):
         # get site creators
-        creators_api = f"https://{domain}/api/v0/creators.txt"
+        creators_api = f"https://{domain}/api{self.api_ver}/creators.txt"
         logger.debug(f"Getting creator json from {creators_api}")
         if self.force_unlisted:
             return []
@@ -141,7 +146,7 @@ class downloader:
         return None
 
     def get_favorites(self, domain:str, fav_type:str, retry:int, services:list = None):
-        fav_api = f'https://{domain}/api/v0/account/favorites?type={fav_type}'
+        fav_api = f'https://{domain}/api{self.api_ver}/account/favorites?type={fav_type}'
         logger.debug(f"Getting favorite json from {fav_api}")
         response = self.session.get(url=fav_api, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if response.status_code == 401:
@@ -168,7 +173,7 @@ class downloader:
         if not found:
             logger.error(f"Unable to find url parameters for {url}")
             return
-        api = f"{found.group(1)}api/v0/{found.group(3)}"
+        api = f"{found.group(1)}api{self.api_ver}/{found.group(3)}"
         site = found.group(2)
         service = found.group(4)
         user_id = found.group(5)
@@ -289,7 +294,7 @@ class downloader:
         if post['post_variables']['service'] != 'patreon':
             logger.debug("Skipping dms for non patreon user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        post_url = "https://{site}/api/v0/{service}/user/{user_id}/dms".format(**post['post_variables'])
+        post_url = "https://{site}/api{api_ver}/{service}/user/{user_id}/dms".format(**post['post_variables'],api_ver=self.api_ver)
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
@@ -320,7 +325,7 @@ class downloader:
         if post['post_variables']['service'] != 'fanbox':
             logger.debug("Skipping fancards for non fanbox user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        post_url = "https://{site}/api/v0/{service}/user/{user_id}/fancards".format(**post['post_variables'])
+        post_url = "https://{site}/api{api_ver}/{service}/user/{user_id}/fancards".format(**post['post_variables'],api_ver=self.api_ver)
         logger.info(f"Downloading fancards {post_url}")
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
@@ -356,7 +361,7 @@ class downloader:
             self.download_file({"file_path":file_path,"file_variables":file_variables}, retry=self.retry, post=post) #dummy postid
 
     def write_announcements(self, post:dict, retry:int):
-        post_url = "https://{site}/api/v0/{service}/user/{user_id}/announcements".format(**post['post_variables'])
+        post_url = "https://{site}/api{api_ver}/{service}/user/{user_id}/announcements".format(**post['post_variables'],api_ver=self.api_ver)
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
@@ -428,7 +433,7 @@ class downloader:
 
     def get_comments(self, post:dict):
         try:
-            post_url = "https://{site}/api/v0/{service}/user/{user_id}/post/{id}/comments".format(**post['post_variables'])
+            post_url = "https://{site}/api{api_ver}/{service}/user/{user_id}/post/{id}/comments".format(**post['post_variables'],api_ver=self.api_ver)
             response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
             if response.status_code == 429:
                 logger.warning(f"Failed to get post comments | 429 Too Many Requests | All retries failed")
@@ -634,7 +639,7 @@ class downloader:
             if file['file_variables']['ext'] in ('zip','7z','rar'):
                 passwd_json = None
                 try:
-                    passwd_api = "https://{site}/api/v0/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'])
+                    passwd_api = "https://{site}/api{api_ver}/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'],api_ver=self.api_ver)
                     passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
                     passwd_json = passwd_resp.json()
                 except:
