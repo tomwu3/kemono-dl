@@ -283,7 +283,6 @@ class downloader:
                 logger.error(f"Unable to download profile {img_type} for {post['post_variables']['username']}")
 
     def write_dms(self, post:dict, retry:int):
-        # no api method to get comments so using from html (not future proof)
         if post['post_variables']['service'] != 'patreon':
             logger.debug("Skipping dms for non patreon user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
@@ -300,9 +299,7 @@ class downloader:
             else:
                 logger.error("Unable to download DMs for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
-        # page_soup = BeautifulSoup(response.text, 'html.parser')
         page_json = response.json()
-        # if page_soup.find("div", {"class": "no-results"}):
         if page_json.get('props') is None or page_json.get('props').get('dm_count') < 1:
             logger.info("No DMs found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
