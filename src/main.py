@@ -287,7 +287,7 @@ class downloader:
         if post['post_variables']['service'] != 'patreon':
             logger.debug("Skipping dms for non patreon user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        post_url = "https://{site}/{service}/user/{user_id}/dms".format(**post['post_variables'])
+        post_url = "https://{site}/api/v1/{service}/user/{user_id}/dms".format(**post['post_variables'])
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
             if response.status_code==429:
@@ -300,17 +300,21 @@ class downloader:
             else:
                 logger.error("Unable to download DMs for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
-        page_soup = BeautifulSoup(response.text, 'html.parser')
-        if page_soup.find("div", {"class": "no-results"}):
+        # page_soup = BeautifulSoup(response.text, 'html.parser')
+        page_json = response.json()
+        # if page_soup.find("div", {"class": "no-results"}):
+        if page_json.get('props') is None or page_json.get('props').get('dm_count') < 1:
             logger.info("No DMs found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        dms_soup = page_soup.find("div", {"class": "card-list__items"})
         file_variables = {
-            'filename':'direct messages',
-            'ext':'html'
+            'filename':'{dmc} direct messages'.format(dmc=page_json.get('props').get('dm_count')),
+            'ext':'json'
         }
+        dms_json = page_json.get('props').get('dms')
+        if isinstance(dms_json,list):
+            dms_json = dict(enumerate(dms_json))
         file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
-        self.write_to_file(file_path, dms_soup.prettify())
+        self.write_to_file(file_path, dms_json)
 
     def download_fancards(self, post:dict, retry:int):
         # there's api now, too lazy to rewrite
