@@ -314,11 +314,10 @@ class downloader:
         self.write_to_file(file_path, dms_json)
 
     def download_fancards(self, post:dict, retry:int):
-        # there's api now, too lazy to rewrite
         if post['post_variables']['service'] != 'fanbox':
             logger.debug("Skipping fancards for non fanbox user https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        post_url = "https://{site}/{service}/user/{user_id}/fancards".format(**post['post_variables'])
+        post_url = "https://{site}/api/v1/{service}/user/{user_id}/fancards".format(**post['post_variables'])
         logger.info(f"Downloading fancards {post_url}")
         response = self.session.get(url=post_url, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
         if not response.ok:
@@ -332,16 +331,17 @@ class downloader:
             else:
                 logger.error("Unable to find Fancards for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
-        page_soup = BeautifulSoup(response.text, 'html.parser')
-        if page_soup.find("div", {"class": "no-results"}):
+        page_json = response.json()
+        fancards_json = page_json if isinstance(page_json, list) else [page_json]
+        if not len(fancards_json):
             logger.info("No fancards found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
-        fancards_soup = page_soup.find_all("article", {"class": "fancard__file"})
-        for fancard in fancards_soup:
-            fancard_title = fancard.find("span").getText()
-            fancard_url = fancard.find("a", href=True)['href']
-            fancard_filename_orig = fancard_url.split("/")[-1]
-            fancard_filename, fancard_ext = fancard_filename_orig.split(".")
+        for fancard in fancards_json:
+            fancard_added = datetime.datetime.fromisoformat(fancard.get('added'))
+            fancard_title = datetime.datetime.strftime(fancard_added,'Added %Y-%m')
+            fancard_url = fancard.get('server') + fancard.get('path')
+            fancard_filename = fancard.get('hash')
+            fancard_ext = fancard.get('ext').strip('.')
             file_variables = {
                 'filename':'{title}_{name}'.format(title=fancard_title,name=fancard_filename),
                 'ext':fancard_ext,
