@@ -569,7 +569,7 @@ class downloader:
         if post['links']['text']:
             try:
                 if self.extract_all_links:
-                    self.write_links_to_file(f".\{post['post_variables']['username']}.txt", post['links']['text'])
+                    self.write_links_to_file(f"./{post['post_variables']['username']}.txt", post['links']['text'])
                 if self.extract_links:
                     self.write_to_file(post['links']['file_path'], post['links']['text'])
             except:
@@ -634,7 +634,7 @@ class downloader:
                 resp=self.session.get(url=url_pre_redir, stream=False, headers=dict(**self.headers,**request_headers), cookies=self.cookies, timeout=self.timeout, allow_redirects=False)
                 if resp.status_code == 302:
                     url_redir = resp.headers['Location']
-                    url_match = re.match('(https://[a-z])[0-9]\.',url_redir)
+                    url_match = re.match('(https://[a-z])[0-9]\\.',url_redir)
                     if url_match:
                         url_redir=url_redir.replace(url_match.group(1),'https://'+dss_letter)
                     file['file_variables']['url'] = url_redir
