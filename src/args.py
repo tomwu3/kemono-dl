@@ -279,7 +279,7 @@ def get_args():
     
     ap.add_argument("--archives-password",
                     action=argparse.BooleanOptionalAction, default=True,
-                    help="Try look for passwords of archived file (zip, 7z, rar).")
+                    help="Try look for passwords of archived files (zip, 7z, rar), the password will be stored in \".pw\" file in the same place of the archive if found.")
 
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}

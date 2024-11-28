@@ -635,21 +635,19 @@ class downloader:
         request_headers={'Referer':file['file_variables']['referer']}
 
         # archives password
-        if self.archives_password:
-            if file['file_variables']['ext'] in ('zip','7z','rar'):
+        if self.archives_password and file['file_variables']['ext'] in ('zip','7z','rar'):
+            try:
+                passwd_api = "https://{site}/api{api_ver}/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'],api_ver=self.api_ver)
+                passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
+                passwd_json = passwd_resp.json()
+            except:
                 passwd_json = None
-                try:
-                    passwd_api = "https://{site}/api{api_ver}/posts/archives/{hash}".format(**post['post_variables'],**file['file_variables'],api_ver=self.api_ver)
-                    passwd_resp = self.session.get(url=passwd_api, allow_redirects=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout)
-                    passwd_json = passwd_resp.json()
-                except:
-                    pass
-                if passwd_json:
-                    if passwd_json.get('archive').get('password'):
-                        passwd_filevar = dict(file['file_variables'])
-                        passwd_filevar.update({'ext':'pw'})
-                        passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.filename_template, self.restrict_ascii)
-                        self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
+            if passwd_json:
+                if passwd_json.get('archive') and passwd_json.get('archive').get('password'):
+                    passwd_filevar = dict(file['file_variables'])
+                    passwd_filevar.update({'ext':'pw'})
+                    passwd_filepath = compile_file_path(post['post_path'], post['post_variables'], passwd_filevar, self.filename_template, self.restrict_ascii)
+                    self.write_to_file(passwd_filepath, passwd_json.get('archive').get('password'))
 
         if self.force_dss:
             dss_letter=isinstance(self.force_dss,str) and self.force_dss[0]
