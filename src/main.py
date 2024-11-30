@@ -137,7 +137,10 @@ class downloader:
         logger.debug(f"Getting creator json from {creators_api}")
         if self.force_unlisted:
             return []
-        return self.session.get(url=creators_api, cookies=self.cookies, headers=self.headers, timeout=self.timeout).json()
+        resp = self.session.get(url=creators_api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+        # json.dumps accepts bytes, I'm not sure if leave it like auto-detect is a good idea or not
+        resp_content_decode = resp.content.decode('utf-8')
+        return json.dumps(resp_content_decode)
 
     def get_user(self, user_id:str, service:str):
         for creator in self.creators:
