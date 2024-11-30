@@ -138,9 +138,9 @@ class downloader:
         if self.force_unlisted:
             return []
         resp = self.session.get(url=creators_api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-        # json.dumps accepts bytes, I'm not sure if leave it like auto-detect is a good idea or not
+        # json.loads accepts bytes, I'm not sure if leave it like auto-detect is a good idea or not
         resp_content_decode = resp.content.decode('utf-8')
-        return json.dumps(resp_content_decode)
+        return json.loads(resp_content_decode)
 
     def get_user(self, user_id:str, service:str):
         for creator in self.creators:
