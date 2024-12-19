@@ -278,7 +278,7 @@ def get_args():
                     help='Force Data Server Series.')
     
     ap.add_argument("--archives-password",
-                    action=argparse.BooleanOptionalAction, default=True,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Try look for passwords of archived files (zip, 7z, rar), the password will be stored in \".pw\" file in the same place of the archive if found.")
 
     args = vars(ap.parse_args())
