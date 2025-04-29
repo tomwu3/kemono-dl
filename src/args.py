@@ -2,6 +2,7 @@ import os
 import datetime
 import re
 import argparse
+import sys
 from http.cookiejar import MozillaCookieJar, LoadError
 from urllib.parse import urlparse, urlunparse
 
@@ -281,10 +282,13 @@ def get_args():
                     action=argparse.BooleanOptionalAction, default=False,
                     help="Try look for passwords of archived files (zip, 7z, rar), the password will be stored in \".pw\" file in the same place of the archive if found. (default: False)")
 
+    if len(sys.argv) < 2:
+        ap.print_usage()
+        sys.exit(1)
     args = vars(ap.parse_args())
     args['cookie_domains'] = {'kemono': None, 'coomer': None}
 
-    # takes a comma seperated lost of cookie files and loads them into a cookie jar
+    # takes a comma seperated list of cookie files and loads them into a cookie jar
     if args['cookies']:
         cookie_files = [s.strip() for s in args["cookies"].split(",")]
         args['cookies'] = MozillaCookieJar()
