@@ -172,7 +172,7 @@ class downloader:
                 self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['id']}", retry=self.retry)
 
     def get_post(self, url:str, retry:int, chunk=0, first=True):
-        found = re.search(r'(https://((?:kemono|coomer)\.(?:party|su))/)(([^/]+)/user/([^/]+)($|/post/[^/]+))', url)
+        found = re.search(r'(https://((?:kemono|coomer)\.(?:party|su))/)(([^/]+)/user/([^/]+)($|/post/[^/]+)($|/revision/[^/]+))', url)
         if not found:
             logger.error(f"Unable to find url parameters for {url}")
             return
@@ -181,6 +181,7 @@ class downloader:
         service = found.group(4)
         user_id = found.group(5)
         is_post = found.group(6)
+        is_revision = found.group(7)
         user = self.get_user(user_id, service)
         if not user:
             if self.force_unlisted:
@@ -243,7 +244,9 @@ class downloader:
                 comments_original=self.comments
                 self.comments=False
                 post_tmp = self.clean_post(post, user, site)
-                if self.skip_post(post_tmp):
+                if ret := self.skip_post(post_tmp):
+                    if ret == 2:
+                        return
                     continue
                 self.comments=comments_original
                 post = self.clean_post(post, user, site)
@@ -854,9 +857,9 @@ class downloader:
             if not post['post_variables']['published']:
                 logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
                 return True
-            elif check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
+            elif ret := check_date(self.get_date_by_type(post['post_variables']['published' if not self.fp_added else 'added'], self.date_strf_pattern), self.date, self.datebefore, self.dateafter):
                 logger.info(f"Skipping post {post['post_variables']['id']} | post published date not in range")
-                return True
+                return ret
 
         if "https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables']) in self.comp_posts:
             logger.info(f"Skipping post {post['post_variables']['id']} | post was already downloaded this session")
