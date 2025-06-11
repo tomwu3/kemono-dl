@@ -2,7 +2,9 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 import re
 import os
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+import warnings
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 import time
 import datetime
 from PIL import Image
