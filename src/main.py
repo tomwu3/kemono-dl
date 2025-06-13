@@ -692,7 +692,7 @@ class downloader:
 
         # responce status code checking
         if response.status_code == 404:
-            logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 404 Not Found")
+            logger.error(f"Failed to download: {file['file_variables']['url']} | 404 Not Found")
             self.post_errors += 1
             return
 
@@ -712,12 +712,12 @@ class downloader:
                 if response.status_code != 403:
                     break
             if response.status_code == 403:
-                logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 403 Forbidden")
+                logger.error(f"Failed to download: {file['file_variables']['url']} | 403 Forbidden")
                 self.post_errors += 1
                 return
 
         if response.status_code == 416:
-            logger.warning(f"Failed to download: {os.path.split(file['file_path'])[1]} | 416 Range Not Satisfiable | Assuming broken server hash value")
+            logger.warning(f"Failed to download: {file['file_variables']['url']} | 416 Range Not Satisfiable | Assuming broken server hash value")
             content_length = self.session.get(url=file['file_variables']['url'], stream=True, headers=self.headers, cookies=self.cookies, timeout=self.timeout).headers.get('content-length', '')
             if int(content_length) == resume_size:
                 logger.debug("Correct amount of bytes downloaded | Assuming download completed successfully")
@@ -739,11 +739,11 @@ class downloader:
 
         if response.status_code == 429:
             # already retried for 429
-            logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | 429 Too Many Requests | All retries failed")
+            logger.error(f"Failed to download: {file['file_variables']['url']} | 429 Too Many Requests | All retries failed")
             self.post_errors += 1
             return
         if not response.ok:
-            logger.error(f"Failed to download: {os.path.split(file['file_path'])[1]} | {response.status_code} {response.reason}")
+            logger.error(f"Failed to download: {file['file_variables']['url']} | {response.status_code} {response.reason}")
             self.post_errors += 1
             return
 
