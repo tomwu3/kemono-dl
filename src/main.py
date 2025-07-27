@@ -24,8 +24,8 @@ class downloader:
 
     def __init__(self, args):
         self.input_urls = args['links'] + args['from_file']
-        if args['cccp']:
-            self.input_urls = [i.replace('.party','.su') for i in self.input_urls]
+        if args['replace_tld']:
+            self.input_urls = [i.replace('.party','.cr').replace('.su','.cr') for i in self.input_urls]
         # list of completed posts from current session
         self.comp_posts = []
         # list of creators info
@@ -40,7 +40,7 @@ class downloader:
 
         for i in ('/v1','/v0'):
             self.api_ver = i
-            if requests.get(f'https://kemono.su/api{self.api_ver}/app_version').status_code == 200:
+            if requests.get(f'https://kemono.cr/api{self.api_ver}/app_version').status_code == 200:
                 break
 
         # file/folder naming
@@ -174,7 +174,7 @@ class downloader:
                 self.get_post(f"https://{domain}/{favorite['service']}/user/{favorite['id']}", retry=self.retry)
 
     def get_post(self, url:str, retry:int, chunk=0, first=True):
-        found = re.search(r'(https://((?:kemono|coomer)\.(?:party|su))/)(([^/]+)/user/([^/]+)($|/post/[^/]+)($|/revision/[^/]+))', url)
+        found = re.search(r'(https://((?:kemono|coomer)\.(?:party|su|cr))/)(([^/]+)/user/([^/]+)($|/post/[^/]+)($|/revision/[^/]+))', url)
         if not found:
             logger.error(f"Unable to find url parameters for {url}")
             return
@@ -832,6 +832,14 @@ class downloader:
         if self.archive_file and os.path.exists(self.archive_file):
             with open(self.archive_file,'r') as f:
                 self.archive_list = f.read().splitlines()
+            additional = [i.replace(".party",".cr") for i in self.archive_list]
+            additional += [i.replace(".party",".su") for i in self.archive_list]
+            additional += [i.replace(".su",".cr") for i in self.archive_list]
+            additional += [i.replace(".su",".party") for i in self.archive_list]
+            additional += [i.replace(".cr",".su") for i in self.archive_list]
+            additional += [i.replace(".cr",".party") for i in self.archive_list]
+            self.archive_list += additional
+            self.archive_list = set(self.archive_list)
 
     def write_archive(self, post:dict):
         if self.archive_file and self.post_errors == 0 and not self.simulate:
@@ -850,8 +858,7 @@ class downloader:
         # check if the post should be downloaded
         if self.archive_file:
             post_url = "https://{site}/{service}/user/{user_id}/post/{id}".format(**post['post_variables'])
-            post_url_another = post_url.replace('.su','.party') if post['post_variables']['site'].endswith('.su') else post_url.replace('.party','.su')
-            if post_url in self.archive_list or post_url_another in self.archive_list:
+            if post_url in self.archive_list:
                 logger.info(f"Skipping post {post['post_variables']['id']} | post already archived") # add some numbers to indicate that the script isn't frozen when a lot of posts skipped and your screen is full of this message
                 return True
 
