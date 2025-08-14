@@ -139,7 +139,7 @@ class downloader:
 
     def get_creators(self, domain:str):
         # get site creators
-        creators_api = f"https://{domain}/api{self.api_ver}/creators.txt"
+        creators_api = f"https://{domain}/api{self.api_ver}/creators"
         logger.debug(f"Getting creator json from {creators_api}")
         if self.force_unlisted:
             return []
