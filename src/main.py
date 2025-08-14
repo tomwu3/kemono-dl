@@ -202,13 +202,13 @@ class downloader:
         while True:
             if is_post:
                 logger.debug(f"Requesting post json from: {api}")
-                response = self.session.get(url=api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                response = self.session.get(url=f"{api}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
                     logger.warning(f"Failed to request post json from: {api} | 429 Too Many Requests | All retries failed")
                     return
             else:
                 logger.debug(f"Requesting user json from: {api}?o={chunk}")
-                response = self.session.get(url=f"{api}?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                response = self.session.get(url=f"{api}/posts?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
                     logger.warning(f"Failed to request user json from: {api}?o={chunk} | 429 Too Many Requests | All retries failed")
                     return
@@ -225,7 +225,7 @@ class downloader:
                 json=[json]
             for post in json:
                 # only download once
-                if not is_post and first:
+                if not is_post and False: # FIXME
                     try:
                         post_tmp = self.clean_post(post, user, site)
                         logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
@@ -247,6 +247,10 @@ class downloader:
                         else:
                             logger.error(f"Failed to get icon, banner, dms, fancards or announcements | All retries failed")
                         return
+                if not is_post:
+                    logger.debug('requesting full post json\n')
+                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                    post = post.json().get('post')
                 comments_original=self.comments
                 self.comments=False
                 post_tmp = self.clean_post(post, user, site)
