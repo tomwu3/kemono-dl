@@ -224,8 +224,12 @@ class downloader:
             if not isinstance(json,list):
                 json=[json]
             for post in json:
+                if not is_post:
+                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                    post = post.json().get('post')
                 # only download once
-                if not is_post and False: # FIXME
+                if not is_post and first:
                     try:
                         post_tmp = self.clean_post(post, user, site)
                         logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
@@ -247,10 +251,6 @@ class downloader:
                         else:
                             logger.error(f"Failed to get icon, banner, dms, fancards or announcements | All retries failed")
                         return
-                if not is_post:
-                    logger.debug('requesting full post json\n')
-                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-                    post = post.json().get('post')
                 comments_original=self.comments
                 self.comments=False
                 post_tmp = self.clean_post(post, user, site)
