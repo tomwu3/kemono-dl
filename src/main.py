@@ -323,15 +323,15 @@ class downloader:
             else:
                 logger.error("Unable to download DMs for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
-        page_json = response.json()
-        if page_json.get('props') is None or page_json.get('props').get('dm_count') < 1:
+        dms_json = response.json()
+        dmc = len(dms_json)
+        if dmc == 0:
             logger.info("No DMs found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
         file_variables = {
-            'filename':'{dmc} direct messages'.format(dmc=page_json.get('props').get('dm_count')),
+            'filename':f'{dmc} direct messages',
             'ext':'json'
         }
-        dms_json = page_json.get('props').get('dms')
         if isinstance(dms_json,list):
             dms_json = dict(enumerate(dms_json))
         file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
