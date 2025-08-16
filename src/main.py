@@ -37,6 +37,7 @@ class downloader:
 
         # requests variables
         self.headers = {'User-Agent': args['user_agent']} if args['user_agent'] else {}
+        self.headers['Accept'] = 'text/css'
         self.cookies = args['cookies']
         self.timeout = 300
 
@@ -44,7 +45,7 @@ class downloader:
 
         for i in ('/v1','/v0'):
             self.api_ver = i
-            if requests.get(f'https://kemono.cr/api{self.api_ver}/app_version').status_code == 200:
+            if requests.get(f'https://kemono.cr/api{self.api_ver}/app_version', headers=self.headers).status_code == 200:
                 break
 
         # file/folder naming
