@@ -37,6 +37,7 @@ class downloader:
 
         # requests variables
         self.headers = {'User-Agent': args['user_agent']} if args['user_agent'] else {}
+        self.headers['Accept'] = 'text/css'
         self.cookies = args['cookies']
         self.timeout = 300
 
@@ -44,7 +45,7 @@ class downloader:
 
         for i in ('/v1','/v0'):
             self.api_ver = i
-            if requests.get(f'https://kemono.cr/api{self.api_ver}/app_version').status_code == 200:
+            if requests.get(f'https://kemono.cr/api{self.api_ver}/app_version', headers=self.headers).status_code == 200:
                 break
 
         # file/folder naming
@@ -139,7 +140,7 @@ class downloader:
 
     def get_creators(self, domain:str):
         # get site creators
-        creators_api = f"https://{domain}/api{self.api_ver}/creators.txt"
+        creators_api = f"https://{domain}/api{self.api_ver}/creators"
         logger.debug(f"Getting creator json from {creators_api}")
         if self.force_unlisted:
             return []
@@ -202,13 +203,13 @@ class downloader:
         while True:
             if is_post:
                 logger.debug(f"Requesting post json from: {api}")
-                response = self.session.get(url=api, cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                response = self.session.get(url=f"{api}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
                     logger.warning(f"Failed to request post json from: {api} | 429 Too Many Requests | All retries failed")
                     return
             else:
                 logger.debug(f"Requesting user json from: {api}?o={chunk}")
-                response = self.session.get(url=f"{api}?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                response = self.session.get(url=f"{api}/posts?o={chunk}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                 if response.status_code == 429:
                     logger.warning(f"Failed to request user json from: {api}?o={chunk} | 429 Too Many Requests | All retries failed")
                     return
@@ -224,6 +225,10 @@ class downloader:
             if not isinstance(json,list):
                 json=[json]
             for post in json:
+                if not is_post:
+                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                    post = post.json().get('post')
                 # only download once
                 if not is_post and first:
                     try:
@@ -319,15 +324,15 @@ class downloader:
             else:
                 logger.error("Unable to download DMs for {service} {user_id} | {code} | All retries failed.".format(core=response.status_code,**post['post_variables']))
             return
-        page_json = response.json()
-        if page_json.get('props') is None or page_json.get('props').get('dm_count') < 1:
+        dms_json = response.json()
+        dmc = len(dms_json)
+        if dmc == 0:
             logger.info("No DMs found for https://{site}/{service}/user/{user_id}".format(**post['post_variables']))
             return
         file_variables = {
-            'filename':'{dmc} direct messages'.format(dmc=page_json.get('props').get('dm_count')),
+            'filename':f'{dmc} direct messages',
             'ext':'json'
         }
-        dms_json = page_json.get('props').get('dms')
         if isinstance(dms_json,list):
             dms_json = dict(enumerate(dms_json))
         file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.user_filename_template, self.restrict_ascii)
