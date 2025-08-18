@@ -49,11 +49,23 @@ class downloader:
                 break
 
         # file/folder naming
+        self.name_templates_glop = ''
+
         self.download_path_template = args['dirname_pattern']
+        self.name_templates_glop += args['dirname_pattern']
+
         self.filename_template = args['filename_pattern']
+        self.name_templates_glop += args['filename_pattern']
+
         self.inline_filename_template = args['inline_filename_pattern']
+        self.name_templates_glop += args['inline_filename_pattern']
+
         self.other_filename_template = args['other_filename_pattern']
+        self.name_templates_glop += args['other_filename_pattern']
+
         self.user_filename_template = args['user_filename_pattern']
+        self.name_templates_glop += args['user_filename_pattern']
+
         self.date_strf_pattern = args['date_strf_pattern']
         self.yt_dlp_args = args['yt_dlp_args']
         self.restrict_ascii = args['restrict_names']
@@ -110,7 +122,10 @@ class downloader:
         self.simulate = args['simulate']
         self.local_hash = args['local_hash']
         self.dupe_check = args['dupe_check']
+
         self.dupe_check_template = args['dupe_check_pattern']
+        self.name_templates_glop += args['dupe_check_pattern']
+
         self.force_unlisted = args['force_unlisted']
         self.retry_403 = args['retry_403']
         self.fp_added = args['fp_added']
@@ -257,7 +272,8 @@ class downloader:
                         return
                     continue
                 self.comments=comments_original
-                if not is_post and (self.content or self.inline or self.comments or self.extract_links or self.extract_all_links):
+                if not is_post and (self.content or self.inline or self.comments or self.extract_links or self.extract_all_links
+                                    or '{added}' in self.name_templates_glop or '{edited}' in self.name_templates_glop):
                     logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
                     post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                     post = post.json().get('post')
