@@ -225,10 +225,6 @@ class downloader:
             if not isinstance(json,list):
                 json=[json]
             for post in json:
-                if not is_post:
-                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
-                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-                    post = post.json().get('post')
                 # only download once
                 if not is_post and first:
                     try:
@@ -245,7 +241,8 @@ class downloader:
                             logger.debug(f"Writting announcements | {user['name']} | {user['id']}")
                             self.write_announcements(post_tmp,retry=self.retry)
                         first = False
-                    except:
+                    except Exception as exc:
+                        logger.debug(f"{type(exc)}: {exc}")
                         if retry > 0:
                             logger.warning(f"Failed to get icon, banner, dms, fancards or announcements | Retrying")
                             self.get_post(url=url, retry=retry-1, chunk=chunk, first=True)
@@ -260,6 +257,10 @@ class downloader:
                         return
                     continue
                 self.comments=comments_original
+                if not is_post:
+                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                    post = post.json().get('post')
                 post = self.clean_post(post, user, site)
                 try:
                     self.download_post(post)
@@ -491,12 +492,12 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        new_post['post_variables']['added'] = self.format_time_by_type(post['added']) if post['added'] else None
-        new_post['post_variables']['updated'] = self.format_time_by_type(post['edited']) if post['edited'] else None
-        new_post['post_variables']['user_updated'] = self.format_time_by_type(user['updated']) if user['updated'] else None
-        new_post['post_variables']['published'] = self.format_time_by_type(post['published']) if post['published'] else None
-        new_post['post_variables']['tags'] = post['tags']
-        new_post['post_variables']['poll'] = post['poll']
+        new_post['post_variables']['added'] = self.format_time_by_type(post.get('added')) if post.get('added') else None
+        new_post['post_variables']['updated'] = self.format_time_by_type(post.get('edited')) if post.get('edited') else None
+        new_post['post_variables']['user_updated'] = self.format_time_by_type(user.get('updated')) if user.get('updated') else None
+        new_post['post_variables']['published'] = self.format_time_by_type(post.get('published')) if post.get('published') else None
+        if post.get('tags'): new_post['post_variables']['tags'] = post.get('tags')
+        if post.get('poll'): new_post['post_variables']['poll'] = post.get('poll')
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
@@ -528,19 +529,21 @@ class downloader:
                 new_post['attachments'].append(file)
 
         new_post['inline_images'] = []
-        content_soup = BeautifulSoup(post['content'], 'html.parser')
-        if self.inline:
-            content_soup = self.get_inline_images(new_post, content_soup)
+        content_soup = None
+        if post.get('content') is not None:
+            content_soup = BeautifulSoup(post.get('content'), 'html.parser')
+            if self.inline:
+                content_soup = self.get_inline_images(new_post, content_soup)
 
         comment_soup = ''
 
         new_post['content'] = {'text':None,'file_variables':None, 'file_path':None}
-        embed = "{subject}\n{url}\n{description}".format(**post['embed']) if post['embed'] else ''
+        embed = "{subject}\n{url}\n{description}".format(**post.get('embed')) if post.get('embed') else ''
         if (self.content or self.comments) and (content_soup or comment_soup or embed):
             self.compile_post_content(new_post, content_soup.prettify(), comment_soup, embed)
 
         new_post['links'] = {'text':None,'file_variables':None, 'file_path':None}
-        embed_url = "{url}\n".format(**post['embed']) if post['embed'] else ''
+        embed_url = "{url}\n".format(**post.get('embed')) if post.get('embed') else ''
         if self.extract_links or self.extract_all_links:
             self.compile_content_links(new_post, content_soup, embed_url)
 
