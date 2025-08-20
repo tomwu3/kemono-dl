@@ -273,7 +273,7 @@ class downloader:
                     continue
                 self.comments=comments_original
                 if not is_post and (self.content or self.inline or self.comments or self.extract_links or self.extract_all_links
-                                    or '{added}' in self.name_templates_glop or '{edited}' in self.name_templates_glop):
+                                    or '{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
                     logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
                     post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                     post = post.json().get('post')
