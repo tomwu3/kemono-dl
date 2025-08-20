@@ -242,6 +242,10 @@ class downloader:
             for post in json:
                 # only download once
                 if not is_post and first:
+                    if ('{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
+                        logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                        post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                        post = post.json().get('post')
                     try:
                         post_tmp = self.clean_post(post, user, site)
                         logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
