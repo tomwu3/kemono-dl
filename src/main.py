@@ -565,7 +565,7 @@ class downloader:
 
         new_post['links'] = {'text':None,'file_variables':None, 'file_path':None}
         embed_url = "{url}\n".format(**post.get('embed')) if post.get('embed') else ''
-        if self.extract_links or self.extract_all_links:
+        if (self.extract_links or self.extract_all_links) and content_soup:
             self.compile_content_links(new_post, content_soup, embed_url)
 
         return new_post
