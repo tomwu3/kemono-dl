@@ -513,12 +513,12 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        if post.get('added'):       new_post['post_variables']['added'] = self.format_time_by_type(post.get('added'))
-        if post.get('edited'):      new_post['post_variables']['updated'] = self.format_time_by_type(post.get('edited'))
-        if user.get('updated'):     new_post['post_variables']['user_updated'] = self.format_time_by_type(user.get('updated'))
-        if post.get('published'):   new_post['post_variables']['published'] = self.format_time_by_type(post.get('published'))
-        if post.get('tags'):        new_post['post_variables']['tags'] = post.get('tags')
-        if post.get('poll'):        new_post['post_variables']['poll'] = post.get('poll')
+        new_post['post_variables']['added'] = self.format_time_by_type(post.get('added'))
+        new_post['post_variables']['updated'] = self.format_time_by_type(post.get('edited'))
+        new_post['post_variables']['user_updated'] = self.format_time_by_type(user.get('updated'))
+        new_post['post_variables']['published'] = self.format_time_by_type(post.get('published'))
+        if post.get('tags'): new_post['post_variables']['tags'] = post.get('tags')
+        if post.get('poll'): new_post['post_variables']['poll'] = post.get('poll')
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
