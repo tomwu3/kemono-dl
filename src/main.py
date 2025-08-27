@@ -49,11 +49,23 @@ class downloader:
                 break
 
         # file/folder naming
+        self.name_templates_glop = ''
+
         self.download_path_template = args['dirname_pattern']
+        self.name_templates_glop += args['dirname_pattern']
+
         self.filename_template = args['filename_pattern']
+        self.name_templates_glop += args['filename_pattern']
+
         self.inline_filename_template = args['inline_filename_pattern']
+        self.name_templates_glop += args['inline_filename_pattern']
+
         self.other_filename_template = args['other_filename_pattern']
+        self.name_templates_glop += args['other_filename_pattern']
+
         self.user_filename_template = args['user_filename_pattern']
+        self.name_templates_glop += args['user_filename_pattern']
+
         self.date_strf_pattern = args['date_strf_pattern']
         self.yt_dlp_args = args['yt_dlp_args']
         self.restrict_ascii = args['restrict_names']
@@ -110,7 +122,10 @@ class downloader:
         self.simulate = args['simulate']
         self.local_hash = args['local_hash']
         self.dupe_check = args['dupe_check']
+
         self.dupe_check_template = args['dupe_check_pattern']
+        self.name_templates_glop += args['dupe_check_pattern']
+
         self.force_unlisted = args['force_unlisted']
         self.retry_403 = args['retry_403']
         self.fp_added = args['fp_added']
@@ -225,12 +240,12 @@ class downloader:
             if not isinstance(json,list):
                 json=[json]
             for post in json:
-                if not is_post:
-                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
-                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-                    post = post.json().get('post')
                 # only download once
                 if not is_post and first:
+                    if ('{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
+                        logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                        post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                        post = post.json().get('post')
                     try:
                         post_tmp = self.clean_post(post, user, site)
                         logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
@@ -245,7 +260,8 @@ class downloader:
                             logger.debug(f"Writting announcements | {user['name']} | {user['id']}")
                             self.write_announcements(post_tmp,retry=self.retry)
                         first = False
-                    except:
+                    except Exception as exc:
+                        logger.debug(f"{type(exc)}: {exc}")
                         if retry > 0:
                             logger.warning(f"Failed to get icon, banner, dms, fancards or announcements | Retrying")
                             self.get_post(url=url, retry=retry-1, chunk=chunk, first=True)
@@ -260,6 +276,11 @@ class downloader:
                         return
                     continue
                 self.comments=comments_original
+                if not is_post and (self.content or self.inline or self.comments or self.extract_links or self.extract_all_links
+                                    or '{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
+                    logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                    post = post.json().get('post')
                 post = self.clean_post(post, user, site)
                 try:
                     self.download_post(post)
@@ -467,7 +488,8 @@ class downloader:
             if isinstance(comments_json,list):
                 comments_json = dict(enumerate(comments_json))
             file_path = compile_file_path(post['post_path'], post['post_variables'], file_variables, self.other_filename_template, self.restrict_ascii)
-            self.write_to_file(file_path, comments_json)
+            if len(comments_json):
+                self.write_to_file(file_path, comments_json)
             return True
         except:
             self.post_errors += 1
@@ -491,12 +513,12 @@ class downloader:
         new_post['post_variables']['username'] = user['name']
         new_post['post_variables']['site'] = domain
         new_post['post_variables']['service'] = post['service']
-        new_post['post_variables']['added'] = self.format_time_by_type(post['added']) if post['added'] else None
-        new_post['post_variables']['updated'] = self.format_time_by_type(post['edited']) if post['edited'] else None
-        new_post['post_variables']['user_updated'] = self.format_time_by_type(user['updated']) if user['updated'] else None
-        new_post['post_variables']['published'] = self.format_time_by_type(post['published']) if post['published'] else None
-        new_post['post_variables']['tags'] = post['tags']
-        new_post['post_variables']['poll'] = post['poll']
+        new_post['post_variables']['added'] = self.format_time_by_type(post.get('added'))
+        new_post['post_variables']['updated'] = self.format_time_by_type(post.get('edited'))
+        new_post['post_variables']['user_updated'] = self.format_time_by_type(user.get('updated'))
+        new_post['post_variables']['published'] = self.format_time_by_type(post.get('published'))
+        if post.get('tags'): new_post['post_variables']['tags'] = post.get('tags')
+        if post.get('poll'): new_post['post_variables']['poll'] = post.get('poll')
 
         new_post['post_path'] = compile_post_path(new_post['post_variables'], self.download_path_template, self.restrict_ascii)
 
@@ -528,20 +550,22 @@ class downloader:
                 new_post['attachments'].append(file)
 
         new_post['inline_images'] = []
-        content_soup = BeautifulSoup(post['content'], 'html.parser')
-        if self.inline:
-            content_soup = self.get_inline_images(new_post, content_soup)
+        content_soup = None
+        if post.get('content') is not None:
+            content_soup = BeautifulSoup(post.get('content'), 'html.parser')
+            if self.inline:
+                content_soup = self.get_inline_images(new_post, content_soup)
 
         comment_soup = ''
 
         new_post['content'] = {'text':None,'file_variables':None, 'file_path':None}
-        embed = "{subject}\n{url}\n{description}".format(**post['embed']) if post['embed'] else ''
+        embed = "{subject}\n{url}\n{description}".format(**post.get('embed')) if post.get('embed') else ''
         if (self.content or self.comments) and (content_soup or comment_soup or embed):
             self.compile_post_content(new_post, content_soup.prettify(), comment_soup, embed)
 
         new_post['links'] = {'text':None,'file_variables':None, 'file_path':None}
-        embed_url = "{url}\n".format(**post['embed']) if post['embed'] else ''
-        if self.extract_links or self.extract_all_links:
+        embed_url = "{url}\n".format(**post.get('embed')) if post.get('embed') else ''
+        if (self.extract_links or self.extract_all_links) and content_soup:
             self.compile_content_links(new_post, content_soup, embed_url)
 
         return new_post
