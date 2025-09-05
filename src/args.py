@@ -35,62 +35,62 @@ def get_args():
                     help="Downloads favorite users from coomer.party/su of specified type or types separated by a comma. Types include: all, onlyfans. Your cookie file must have been gotten while logged in to work.")
 
     ap.add_argument("--kemono-fav-posts",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Downloads favorite posts from kemono.party/su. Your cookie file must have been gotten while logged in to work.")
 
     ap.add_argument("--coomer-fav-posts",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Downloads favorite posts from coomer.party/su. Your cookie file must have been gotten while logged in to work.")
 
 
 
     ap.add_argument("--inline",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Download the inline images from the post content.")
 
     ap.add_argument("--content",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write the post content to a html file. The html file includes comments if `--comments` is passed.")
 
     ap.add_argument("--comments",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write the post comments to a html file.")
 
     ap.add_argument("--json",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write the post json to a file.")
 
     ap.add_argument("--extract-links",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write extracted links from post content to a text file.")
 
     ap.add_argument("--extract-all-links",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write all extracted links from poster to USERNAME.txt.")
 
 
     ap.add_argument("--dms",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Write user dms to a html file. Only works when a user url is passed.")
 
     ap.add_argument("--icon",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Download the users profile icon. Only works when a user url is passed.")
 
     ap.add_argument("--banner",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Download the users profile banner. Only works when a user url is passed.")
 
     ap.add_argument("--yt-dlp",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Try to download the post embed with yt-dlp.")
 
     ap.add_argument("--skip-attachments",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Do not download post attachments.")
 
     ap.add_argument("--overwrite",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Overwrite any previously created files.")
 
 
@@ -120,7 +120,7 @@ def get_args():
                     help="Set the date strf pattern variable. See Output Patterns for more detail.")
 
     ap.add_argument("--restrict-names",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help='Set all file and folder names to be limited to only the ascii character set.')
 
 
@@ -186,19 +186,19 @@ def get_args():
                     help="Print the version and exit.")
 
     ap.add_argument("--verbose",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Display debug information and copies output to a file.")
 
     ap.add_argument("--quiet",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Suppress printing except for warnings, errors, and exceptions.")
 
     ap.add_argument("--simulate",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Simulate the given command and do not write to disk.")
 
     ap.add_argument("--no-part-files",
-                    action='store_true', default=False,
+                    action=argparse.BooleanOptionalAction, default=False,
                     help="Do not save attachments or inline images as .part files while downloading. Files partially downloaded will not be resumed if program stops. ")
 
     ap.add_argument("--yt-dlp-args",
