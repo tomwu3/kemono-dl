@@ -279,9 +279,12 @@ class downloader:
                 if not is_post and (self.content or self.inline or self.comments or self.extract_links or self.extract_all_links
                                     or '{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
                     logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
+                    post_jr = post
                     post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
                     post = post.json().get('post')
-                post = self.clean_post(post, user, site)
+                    post = self.clean_post(post, user, site, post_jr)
+                else:
+                    post = self.clean_post(post, user, site)
                 try:
                     self.download_post(post)
                     if self.post_timeout:
@@ -503,7 +506,7 @@ class downloader:
         }
         post['content']['file_path'] = compile_file_path(post['post_path'], post['post_variables'], post['content']['file_variables'], self.other_filename_template, self.restrict_ascii)
 
-    def clean_post(self, post:dict, user:dict, domain:str):
+    def clean_post(self, post:dict, user:dict, domain:str, post_jr:dict = None):
         new_post = {}
         # set post variables
         new_post['post_variables'] = {}
@@ -517,6 +520,8 @@ class downloader:
         new_post['post_variables']['updated'] = self.format_time_by_type(post.get('edited'))
         new_post['post_variables']['user_updated'] = self.format_time_by_type(user.get('updated'))
         new_post['post_variables']['published'] = self.format_time_by_type(post.get('published'))
+        if not new_post['post_variables']['published'] and post_jr:
+            new_post['post_variables']['published'] = self.format_time_by_type(post_jr.get('published'))
         if post.get('tags'): new_post['post_variables']['tags'] = post.get('tags')
         if post.get('poll'): new_post['post_variables']['poll'] = post.get('poll')
 
