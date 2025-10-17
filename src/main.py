@@ -244,8 +244,13 @@ class downloader:
                 if not is_post and first:
                     if ('{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
                         logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
-                        post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-                        post = post.json().get('post')
+                        try:
+                            post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                            post = post.json().get('post')
+                        except Exception as exc:
+                            logger.error(f"Failed to get full post json for first post, {type(exc)}: {exc}")
+                            first = False
+                            continue
                     try:
                         post_tmp = self.clean_post(post, user, site)
                         logger.debug(f"Downloading icon and/or banner | {user['name']} | {user['id']}")
@@ -280,9 +285,13 @@ class downloader:
                                     or '{added}' in self.name_templates_glop or '{updated}' in self.name_templates_glop):
                     logger.debug(f"Requesting full post json from {api}/post/{post['id']}")
                     post_jr = post
-                    post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
-                    post = post.json().get('post')
-                    post = self.clean_post(post, user, site, post_jr)
+                    try:
+                        post = self.session.get(url=f"{api}/post/{post['id']}", cookies=self.cookies, headers=self.headers, timeout=self.timeout)
+                        post = post.json().get('post')
+                        post = self.clean_post(post, user, site, post_jr)
+                    except Exception as exc:
+                        logger.error(f"Failed to get full post json, {type(exc)}: {exc}")
+                        continue
                 else:
                     post = self.clean_post(post, user, site)
                 try:
@@ -535,6 +544,12 @@ class downloader:
             # loop over attachments and set file variables
             for index, attachment in enumerate(post['attachments']):
                 file = {}
+                if not isinstance(attachment, dict):
+                    try:
+                        attachment = json.loads(attachment)
+                    except:
+                        logger.error(f"Unrecognized attachment format")
+                        continue
                 if attachment.get('name') and isinstance(attachment.get('name'),str):
                     filename, file_extension = os.path.splitext(attachment['name'])
                 elif attachment.get('path') and isinstance(attachment.get('path'),str):
