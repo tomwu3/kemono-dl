@@ -290,7 +290,7 @@ class downloader:
                         post = post.json().get('post')
                         post = self.clean_post(post, user, site, post_jr)
                     except Exception as exc:
-                        logger.error(f"Failed to get full post json, {type(exc)}: {exc}")
+                        logger.error(f"Failed to get full post json for post {post['id']}, {type(exc)}: {exc}")
                         continue
                 else:
                     post = self.clean_post(post, user, site)
